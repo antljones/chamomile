@@ -1,0 +1,3 @@
+
+bcp [equity_staging].[data] format nul -c -x -f [equity_staging].[data].xml -t, -d cassandra -T -S sylvia\CHAMOMILE
+bcp [equity_staging].[data] in NASDAQ_20140825.csv -d cassandra -T -f [equity_staging].[data].xml -F 2 -S sylvia\CHAMOMILE
