@@ -14,20 +14,28 @@ declare @index_list as table
      , [include] [nvarchar](max)
   );
 
-if object_id(N''
-             , N'U') is null
-  begin
-      set @message = N'Table ' + quotename(@schema, N']') + N'.'
-                     + quotename(@object, N']')
-                     + N' does not exist in database '
-                     + quotename(db_name(), N']') + N'.';
+--
+-------------------------------------------------
+begin
+    if (select count(*)
+        from   [sys].[tables]
+        where  object_schema_name([object_id]) = @schema
+               and [name] = @object) != 1
+      begin
+          set @message = N'Table ' + quotename(@schema, N']') + N'.'
+                         + quotename(@object, N']')
+                         + N' does not exist in database '
+                         + quotename(db_name(), N']') + N'.';
 
-      throw 51000, @message, 1;
-  end;
+          throw 51000, @message, 1;
+      end;
+end;
 
+--
+-------------------------------------------------
 insert into @index_list
             ([column])
-select name
+select [name]
 from   sys.columns
 where  object_schema_name(object_id) = @schema
        and object_name(object_id) = @object;
