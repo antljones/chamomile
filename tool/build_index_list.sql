@@ -3,15 +3,27 @@
 */
 set nocount on;
 
-declare @include [nvarchar](max),
-        @column  [sysname],
-        @schema  [sysname]= N'dbo',
-        @object  [sysname] = N'ExtPAIntelActivationRequestLog_Reactivations';
+declare @include   [nvarchar](max)
+        , @column  [sysname]
+        , @schema  [sysname]= N'dbo'
+        , @object  [sysname] = N'ExtPAIntelOrderDetails'
+        , @message [nvarchar](max);
 declare @index_list as table
   (
      [column]    [sysname]
      , [include] [nvarchar](max)
   );
+
+if object_id(N''
+             , N'U') is null
+  begin
+      set @message = N'Table ' + quotename(@schema, N']') + N'.'
+                     + quotename(@object, N']')
+                     + N' does not exist in database '
+                     + quotename(db_name(), N']') + N'.';
+
+      throw 51000, @message, 1;
+  end;
 
 insert into @index_list
             ([column])
@@ -43,13 +55,15 @@ while @@fetch_status = 0
 if Indexproperty (Object_id(''[' + @schema
             + N'].[' + @object + N']''), ''' + @schema + N'.'
             + @object + N'.' + @column + N'.nonclustered_index'', ''IndexID'') is not null
-  drop index ['
-            + @schema + N'.' + @object + N'.' + @column + N'.nonclustered_index] on ['
-            + @schema + N'].[' + @object
+  drop index [' + @schema
+            + N'.' + @object + N'.' + @column
+            + N'.nonclustered_index] on [' + @schema
+            + N'].[' + @object
             + N'];
 go
-create nonclustered index [' + @schema
-            + N'.' + @object + N'.' + @column + N'.nonclustered_index] on '
+create nonclustered index [' + @schema + N'.'
+            + @object + N'.' + @column
+            + N'.nonclustered_index] on '
             + quotename(@schema, N']') + N'.'
             + quotename(@object, N']') + N'([' + @column
             + N'])
