@@ -6,7 +6,7 @@ set nocount on;
 declare @include [nvarchar](max),
         @column  [sysname],
         @schema  [sysname]= N'dbo',
-        @object  [sysname] = N'patientEligibilityDm';
+        @object  [sysname] = N'ExtPAIntelActivationRequestLog_Reactivations';
 declare @index_list as table
   (
      [column]    [sysname]
@@ -41,16 +41,16 @@ while @@fetch_status = 0
       print '--
 ------------------------------------------------- 
 if Indexproperty (Object_id(''[' + @schema
-            + N'].[' + @object + N']''), ''IX.' + @schema + N'.'
-            + @object + N'.' + @column + N''', ''IndexID'') is not null
-  drop index [IX.'
-            + @schema + N'.' + @object + N'.' + @column + N'] on ['
+            + N'].[' + @object + N']''), ''' + @schema + N'.'
+            + @object + N'.' + @column + N'.nonclustered_index'', ''IndexID'') is not null
+  drop index ['
+            + @schema + N'.' + @object + N'.' + @column + N'.nonclustered_index] on ['
             + @schema + N'].[' + @object
             + N'];
 go
-create nonclustered index [IX.' + @schema
-            + N'.' + @object + N'.' + @column + N'] on '
-            + quotename(@schema, N']')
+create nonclustered index [' + @schema
+            + N'.' + @object + N'.' + @column + N'.nonclustered_index] on '
+            + quotename(@schema, N']') + N'.'
             + quotename(@object, N']') + N'([' + @column
             + N'])
   include (' + @include + N');
