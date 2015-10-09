@@ -143,7 +143,7 @@ go
 
 exec [sys].sp_addextendedproperty
   @name = N'description',
-  @value = N'Refresh procedure for [administration].[claimLineFt].
+  @value = N'Procedure to update all statistics including indexed views..
   Based on a script from:
   Rhys Jones, 7th Feb 2008
 	http://www.rmjcs.com/SQLServer/ThingsYouMightNotKnow/sp_updatestatsDoesNotUpdateIndexedViewStats/tabid/414/Default.aspx
