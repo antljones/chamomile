@@ -1,3 +1,11 @@
+/*
+	Change to target database prior to running.
+*/
+if schema_id(N'administration') is null
+  execute (N'create schema administration');
+
+go
+
 set ansi_nulls on;
 
 go
@@ -6,9 +14,9 @@ set quoted_identifier on;
 
 go
 
-if object_id(N'[administration].[refresh_statistics]'
+if object_id(N'[administration].[update_statistics]'
              , N'P') is not null
-  drop procedure [administration].[refresh_statistics];
+  drop procedure [administration].[update_statistics];
 
 go
 
@@ -16,7 +24,7 @@ go
 	--
 	-- RUN SCRIPT FOR DOCUMENTATION
 	------------------------------------------------
-	declare @schema [sysname] = N'administration', @object [sysname] = N'refresh_statistics';
+	declare @schema [sysname] = N'administration', @object [sysname] = N'update_statistics';
 	--
 	-------------------------------------------------
 	select N'[' + object_schema_name([extended_properties].[major_id]) +N'].['+
@@ -47,14 +55,14 @@ go
 	where  [schemas].[name]=@schema and [objects].[name]=@object
 	order  by [parameters].[parameter_id],[object],[type],[property]; 
 	
-	execute [administration].[refresh_statistics];
+	execute [administration].[update_statistics];
 	
 */
-create procedure [administration].[refresh_statistics]
+create procedure [administration].[update_statistics]
 as
   begin
-      declare @view nvarchar(1024),
-              @sql  nvarchar(max);
+      declare @view  nvarchar(1024)
+              , @sql nvarchar(max);
 
       --
       -- update statistics on all objects other than indexed views
@@ -121,7 +129,7 @@ if exists (select *
                                           , N'schema'
                                           , N'administration'
                                           , N'procedure'
-                                          , N'refresh_statistics'
+                                          , N'update_statistics'
                                           , default
                                           , default))
   exec [sys].sp_dropextendedproperty
@@ -129,7 +137,7 @@ if exists (select *
     @level0type = N'schema',
     @level0name = N'administration',
     @level1type = N'procedure',
-    @level1name = N'refresh_statistics';
+    @level1name = N'update_statistics';
 
 go
 
@@ -147,7 +155,7 @@ exec [sys].sp_addextendedproperty
   @level0type = N'schema',
   @level0name = N'administration',
   @level1type = N'procedure',
-  @level1name = N'refresh_statistics';
+  @level1name = N'update_statistics';
 
 go
 
@@ -158,7 +166,7 @@ if exists (select *
                                           , N'schema'
                                           , N'administration'
                                           , N'procedure'
-                                          , N'refresh_statistics'
+                                          , N'update_statistics'
                                           , default
                                           , default))
   exec [sys].sp_dropextendedproperty
@@ -166,7 +174,7 @@ if exists (select *
     @level0type = N'schema',
     @level0name = N'administration',
     @level1type = N'procedure',
-    @level1name = N'refresh_statistics';
+    @level1name = N'update_statistics';
 
 go
 
@@ -176,7 +184,7 @@ exec [sys].sp_addextendedproperty
   @level0type = N'schema',
   @level0name = N'administration',
   @level1type = N'procedure',
-  @level1name = N'refresh_statistics';
+  @level1name = N'update_statistics';
 
 go
 
@@ -187,7 +195,7 @@ if exists (select *
                                           , N'schema'
                                           , N'administration'
                                           , N'procedure'
-                                          , N'refresh_statistics'
+                                          , N'update_statistics'
                                           , default
                                           , default))
   exec [sys].sp_dropextendedproperty
@@ -195,7 +203,7 @@ if exists (select *
     @level0type = N'schema',
     @level0name = N'administration',
     @level1type = N'procedure',
-    @level1name = N'refresh_statistics';
+    @level1name = N'update_statistics';
 
 go
 
@@ -205,7 +213,7 @@ exec [sys].sp_addextendedproperty
   @level0type = N'schema',
   @level0name = N'administration',
   @level1type = N'procedure',
-  @level1name = N'refresh_statistics';
+  @level1name = N'update_statistics';
 
 go
 
@@ -216,7 +224,7 @@ if exists (select *
                                           , N'schema'
                                           , N'administration'
                                           , N'procedure'
-                                          , N'refresh_statistics'
+                                          , N'update_statistics'
                                           , default
                                           , default))
   exec [sys].sp_dropextendedproperty
@@ -224,16 +232,16 @@ if exists (select *
     @level0type = N'schema',
     @level0name = N'administration',
     @level1type = N'procedure',
-    @level1name = N'refresh_statistics';
+    @level1name = N'update_statistics';
 
 go
 
 exec [sys].sp_addextendedproperty
   @name = N'execute_as',
-  @value = N'execute [administration].[refresh_statistics];',
+  @value = N'execute [administration].[update_statistics];',
   @level0type = N'schema',
   @level0name = N'administration',
   @level1type = N'procedure',
-  @level1name = N'refresh_statistics';
+  @level1name = N'update_statistics';
 
 go 

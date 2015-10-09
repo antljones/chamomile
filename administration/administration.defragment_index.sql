@@ -1,3 +1,11 @@
+/*
+	Change to target database prior to running.
+*/
+if schema_id(N'administration') is null
+  execute (N'create schema administration');
+
+go
+
 if object_id(N'[administration].[defragment_index]'
              , N'P') is not null
   drop procedure [administration].[defragment_index];

@@ -1,3 +1,11 @@
+/*
+	Change to target database prior to running.
+*/
+if schema_id(N'job') is null
+  execute (N'create schema job');
+
+go
+
 set ansi_nulls on;
 
 go
@@ -58,9 +66,9 @@ as
   begin
       set nocount on;
 
-      declare @step_prefix [sysname]=N'step_',
-              @job         [nvarchar](1000),
-              @step        [int] = @first_step;
+      declare @step_prefix [sysname]=N'sequence_'
+              , @job       [nvarchar](1000)
+              , @step      [int] = @first_step;
 
       if @prefix is null
         raiserror (N'@prefix is a required parameter.',10,1);
@@ -74,17 +82,17 @@ as
         */
             -------------------------------------  
             while exists (select *
-                          from   [msdb].[job].[sysjobactivity] as [sysjobactivity]
-                                 left join [msdb].[job].[sysjobhistory] as [sysjobhistory]
+                          from   [msdb].[dbo].[sysjobactivity] as [sysjobactivity]
+                                 left join [msdb].[dbo].[sysjobhistory] as [sysjobhistory]
                                         on [sysjobactivity].[job_history_id] = [sysjobhistory].[instance_id]
-                                 join [msdb].[job].[sysjobs] as [sysjobs]
+                                 join [msdb].[dbo].[sysjobs] as [sysjobs]
                                    on [sysjobactivity].[job_id] = [sysjobs].[job_id]
-                                 join [msdb].[job].[sysjobsteps] as [sysjobsteps]
+                                 join [msdb].[dbo].[sysjobsteps] as [sysjobsteps]
                                    on [sysjobactivity].[job_id] = [sysjobsteps].[job_id]
                                       and isnull([sysjobactivity].[last_executed_step_id], 0)
                                           + 1 = [sysjobsteps].[step_id]
                           where  [sysjobactivity].[session_id] = (select top (1) [session_id]
-                                                                  from   [msdb].[job].[syssessions]
+                                                                  from   [msdb].[dbo].[syssessions]
                                                                   order  by [agent_start_date] desc)
                                  and [start_execution_date] is not null
                                  and [stop_execution_date] is null
@@ -98,7 +106,7 @@ as
             begin
                 declare [job_cursor] cursor for
                   select [sysjobs].[name]
-                  from   [msdb].[job].[sysjobs] as [sysjobs]
+                  from   [msdb].[dbo].[sysjobs] as [sysjobs]
                   where  [sysjobs].[name] like @prefix + N'.' + @step_prefix
                                                + right(N'0000'+cast(@step as [sysname]), 4)
                                                + N'%'
@@ -112,7 +120,7 @@ as
                 while @@fetch_status = 0
                   begin
                       --  
-                      execute [msdb].[job].[sp_start_job]
+                      execute [msdb].[dbo].[sp_start_job]
                         @job;
 
                       --  
@@ -194,7 +202,7 @@ go
 
 exec sys.sp_addextendedproperty
   @name = N'revision_20150824',
-  @value = N'KELightsey@gmail.com – created.',
+  @value = N'KELightsey@gmail.com – added process delay.',
   @level0type = N'schema',
   @level0name = N'job',
   @level1type = N'procedure',
@@ -253,7 +261,7 @@ go
 exec sys.sp_addextendedproperty
   @name = N'execute_as',
   @value = N'
-  declare @prefix [sysname]=N''refresh.DWReporting.daily'';
+  declare @prefix [sysname]=N''refresh.<business_name>.<period>'';
   execute [job].[run] @prefix=@prefix;',
   @level0type = N'schema',
   @level0name = N'job',
@@ -318,9 +326,9 @@ go
 
 exec sys.sp_addextendedproperty
   @name = N'description',
-  @value = N'@last_step [int]=1000 - defaults to 999 maximum steps (<@last_step). Increase to add additional jobs or decrease
-	to only run a subset of the jobs. For example; to run all jobs except for the defragment and refresh statistics jobs, pass in @last_step=900.
-	As the defragment and refresh statistics jobs are "900" jobs they would not run.',
+  @value = N'@last_step [int]=1000 - defaults to 9999 maximum steps (<@last_step). Increase to add additional jobs or decrease
+	to only run a subset of the jobs. For example; to run all jobs except for the defragment and refresh statistics jobs, pass in @last_step=9000.
+	As the defragment and refresh statistics jobs are "9000" jobs they would not run.',
   @level0type = N'schema',
   @level0name = N'job',
   @level1type = N'procedure',

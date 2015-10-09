@@ -1,4 +1,8 @@
-use [chamomile];
+/*
+	Change to target database prior to running.
+*/
+if schema_id(N'job') is null
+  execute (N'create schema job');
 
 go
 
@@ -64,13 +68,13 @@ as
   begin
       set nocount on;
 
-      declare @failed_text       [sysname] = N'failed',
-              @job_controller    [nvarchar](1000) = @prefix + N'.controller',
-              @last_run_datetime [datetime],
-              @html_output       [nvarchar](max),
-              @current_timestamp [datetime] = current_timestamp,
-              @timestamp         [sysname] = convert([sysname], current_timestamp, 126),
-              @this              [nvarchar](1000) = isnull(quotename(convert([sysname], serverproperty(N'ComputerNamePhysicalNetBIOS'))), N'[default]')
+      declare @failed_text         [sysname] = N'failed'
+              , @job_controller    [nvarchar](1000) = @prefix + N'.controller'
+              , @last_run_datetime [datetime]
+              , @html_output       [nvarchar](max)
+              , @current_timestamp [datetime] = current_timestamp
+              , @timestamp         [sysname] = convert([sysname], current_timestamp, 126)
+              , @this              [nvarchar](1000) = isnull(quotename(convert([sysname], serverproperty(N'ComputerNamePhysicalNetBIOS'))), N'[default]')
                 + N'.'
                 + isnull(quotename(convert([sysname], serverproperty(N'MachineName'))), N'[default]')
                 + N'.'
@@ -84,10 +88,10 @@ as
                              , @current_timestamp);
 
       with [get_run]
-           as (select [msdb].[job].[agent_datetime]([last_run_date]
+           as (select [msdb].[dbo].[agent_datetime]([last_run_date]
                                                     , [last_run_time]) as [run_datetime]
-               from   [msdb].[job].[sysjobs] as [sysjobs]
-                      left join [msdb].[job].[sysjobsteps] as [sysjobsteps]
+               from   [msdb].[dbo].[sysjobs] as [sysjobs]
+                      left join [msdb].[dbo].[sysjobsteps] as [sysjobsteps]
                              on [sysjobsteps].[job_id] = [sysjobs].[job_id]
                where  [sysjobs].[name] = @job_controller)
       select @last_run_datetime = max([run_datetime])
@@ -97,22 +101,22 @@ as
       ---------------------------------------------- 
       set @output = (select [sysjobsteps].[job_id]                      as [job_id]
                             , [sysjobsteps].[step_id]                   as [step_id]
-                            , [msdb].[job].[agent_datetime](run_date
+                            , [msdb].[dbo].[agent_datetime](run_date
                                                             , run_time) as [run_datetime]
                             , [sysjobhistory].[message]                 as [message]
-                     from   [msdb].[job].[sysjobhistory] as [sysjobhistory]
-                            inner join [msdb].[job].[sysjobs] as [sysjobs]
+                     from   [msdb].[dbo].[sysjobhistory] as [sysjobhistory]
+                            inner join [msdb].[dbo].[sysjobs] as [sysjobs]
                                     on [sysjobs].[job_id] = [sysjobhistory].[job_id]
-                            inner join [msdb].[job].[sysjobsteps] as [sysjobsteps]
+                            inner join [msdb].[dbo].[sysjobsteps] as [sysjobsteps]
                                     on [sysjobsteps].[job_id] = [sysjobhistory].[job_id]
                                        and [sysjobsteps].[step_id] = [sysjobhistory].[step_id]
                      where  [sysjobhistory].[message] like case
                                                              when @failed = 1 then N'%' + @failed_text + N'%'
                                                              else N'%'
                                                            end
-                            and ( [msdb].[job].[agent_datetime]([run_date]
+                            and ( [msdb].[dbo].[agent_datetime]([run_date]
                                                                 , [run_time]) >= @start )
-                            and ( [msdb].[job].[agent_datetime]([run_date]
+                            and ( [msdb].[dbo].[agent_datetime]([run_date]
                                                                 , [run_time]) <= @end )
                      order  by [sysjobsteps].[job_id]
                                , [sysjobsteps].[step_id]
@@ -130,7 +134,7 @@ as
                                + isnull(cast(@output as [nvarchar](max)), N'<no_result_set />')
                                + N'</notification>';
 
-            exec [msdb].[job].[sp_send_dbmail]
+            exec [msdb].[dbo].[sp_send_dbmail]
               @recipients = @recipients,
               @from_address = @from_address,
               @profile_name = @profile_name,
