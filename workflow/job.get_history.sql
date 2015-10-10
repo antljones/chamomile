@@ -60,8 +60,8 @@ create procedure [job].[get_history] @prefix          [sysname]
                                      , @always_notify [bit] = 0
                                      , @start         [datetime] = null
                                      , @end           [datetime] = null
-                                     , @recipients    [nvarchar] (max) = N'KLightsey@hcpnv.com'
-                                     , @from_address  [nvarchar] (max) = N'KLightsey@hcpnv.com'
+                                     , @recipients    [nvarchar] (max) = N'KLightsey@gmail.com'
+                                     , @from_address  [nvarchar] (max) = N'KLightsey@gmail.com'
                                      , @profile_name  [sysname] = N'job_notification'
                                      , @output        [xml] = null output
 as
@@ -91,25 +91,25 @@ as
            as (select [msdb].[dbo].[agent_datetime]([last_run_date]
                                                     , [last_run_time]) as [run_datetime]
                from   [msdb].[dbo].[sysjobs] as [sysjobs]
-                      left join [msdb].[dbo].[sysjobsteps] as [sysjobsteps]
-                             on [sysjobsteps].[job_id] = [sysjobs].[job_id]
+                      left join [msdb].[dbo].[sysjobsequences] as [sysjobsequences]
+                             on [sysjobsequences].[job_id] = [sysjobs].[job_id]
                where  [sysjobs].[name] = @job_controller)
       select @last_run_datetime = max([run_datetime])
       from   [get_run];
 
       -- 
       ---------------------------------------------- 
-      set @output = (select [sysjobsteps].[job_id]                      as [job_id]
-                            , [sysjobsteps].[step_id]                   as [step_id]
+      set @output = (select [sysjobsequences].[job_id]                      as [job_id]
+                            , [sysjobsequences].[sequence_id]                   as [sequence_id]
                             , [msdb].[dbo].[agent_datetime](run_date
                                                             , run_time) as [run_datetime]
                             , [sysjobhistory].[message]                 as [message]
                      from   [msdb].[dbo].[sysjobhistory] as [sysjobhistory]
                             inner join [msdb].[dbo].[sysjobs] as [sysjobs]
                                     on [sysjobs].[job_id] = [sysjobhistory].[job_id]
-                            inner join [msdb].[dbo].[sysjobsteps] as [sysjobsteps]
-                                    on [sysjobsteps].[job_id] = [sysjobhistory].[job_id]
-                                       and [sysjobsteps].[step_id] = [sysjobhistory].[step_id]
+                            inner join [msdb].[dbo].[sysjobsequences] as [sysjobsequences]
+                                    on [sysjobsequences].[job_id] = [sysjobhistory].[job_id]
+                                       and [sysjobsequences].[sequence_id] = [sysjobhistory].[sequence_id]
                      where  [sysjobhistory].[message] like case
                                                              when @failed = 1 then N'%' + @failed_text + N'%'
                                                              else N'%'
@@ -118,11 +118,11 @@ as
                                                                 , [run_time]) >= @start )
                             and ( [msdb].[dbo].[agent_datetime]([run_date]
                                                                 , [run_time]) <= @end )
-                     order  by [sysjobsteps].[job_id]
-                               , [sysjobsteps].[step_id]
+                     order  by [sysjobsequences].[job_id]
+                               , [sysjobsequences].[sequence_id]
                                , [sysjobhistory].[run_date] desc
                                , [sysjobhistory].[run_time] desc
-                     for xml path(N'job_step'), root(N'job_history'));
+                     for xml path(N'job_sequence'), root(N'job_history'));
 
       -- 
       ---------------------------------------------- 
@@ -170,7 +170,7 @@ go
 exec sys.sp_addextendedproperty
   @name = N'todo',
   @value = N'<ul>
-	<li>Add job history (step_id=0).</li>
+	<li>Add job history (sequence_id=0).</li>
 	<li>Get template for @html_output from metadata.</li>
 	<li>Get default values for parameters and variables from metadata.</li>
 	<li>Change input parameter defaults to email addresses for groups.</li>
@@ -204,7 +204,7 @@ go
 
 exec sys.sp_addextendedproperty
   @name = N'description',
-  @value = N'[job].[get_history] gets steps... TODO',
+  @value = N'[job].[get_history] gets sequences... TODO',
   @level0type = N'schema',
   @level0name = N'job',
   @level1type = N'procedure',
@@ -233,7 +233,7 @@ go
 
 exec sys.sp_addextendedproperty
   @name = N'revision_20150810',
-  @value = N'KLightsey@hcpnv.com – created.',
+  @value = N'KLightsey@gmail.com – created.',
   @level0type = N'schema',
   @level0name = N'job',
   @level1type = N'procedure',
@@ -244,7 +244,7 @@ go
 --
 ------------------------------------------------- 
 if exists (select *
-           from   fn_listextendedproperty(N'package_footprint_415'
+           from   fn_listextendedproperty(N'package_workflow'
                                           , N'schema'
                                           , N'job'
                                           , N'procedure'
@@ -252,7 +252,7 @@ if exists (select *
                                           , default
                                           , default))
   exec sys.sp_dropextendedproperty
-    @name = N'package_footprint_415',
+    @name = N'package_workflow',
     @level0type = N'schema',
     @level0name = N'job',
     @level1type = N'procedure',
@@ -261,7 +261,7 @@ if exists (select *
 go
 
 exec sys.sp_addextendedproperty
-  @name = N'package_footprint_415',
+  @name = N'package_workflow',
   @value = N'label_only',
   @level0type = N'schema',
   @level0name = N'job',
@@ -474,7 +474,7 @@ go
 
 exec sys.sp_addextendedproperty
   @name = N'description',
-  @value = N'@recipients [nvarchar](max) = N''KLightsey@hcpnv.com'' - [ @recipients = ] ''recipients''
+  @value = N'@recipients [nvarchar](max) = N''KLightsey@gmail.com'' - [ @recipients = ] ''recipients''
 Is a semicolon-delimited list of e-mail addresses to send the message to. The recipients list is of type varchar(max). Although this parameter is optional, at least one of @recipients, @copy_recipients, or @blind_copy_recipients must be specified, or sp_send_dbmail returns an error.',
   @level0type = N'schema',
   @level0name = N'job',
@@ -508,7 +508,7 @@ go
 
 exec sys.sp_addextendedproperty
   @name = N'description',
-  @value = N'@from_address  [nvarchar](max) = N''KLightsey@hcpnv.com'' - [ @from_address = ] ''from_address''
+  @value = N'@from_address  [nvarchar](max) = N''KLightsey@gmail.com'' - [ @from_address = ] ''from_address''
 Is the value of the ''from address'' of the email message. This is an optional parameter used to override the settings in the mail profile. This parameter is of type varchar(MAX). SMTP security settings determine if these overrides are accepted. If no parameter is specified, the default is NULL.',
   @level0type = N'schema',
   @level0name = N'job',

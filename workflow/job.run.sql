@@ -55,30 +55,30 @@ go
 	where  [schemas].[name]=@schema and [objects].[name]=@object
 	order  by [parameters].[parameter_id],[object],[type],[property]; 
 	
-	execute [job].[run] @prefix=N'refresh.DWReporting.daily', @first_step=9000;
+	execute [job].[run] @prefix=N'refresh.DWReporting.daily', @first_sequence=9000;
 */
-create procedure [job].[run] @prefix          [sysname]
-                             , @first_step    [int] = 1
-                             , @last_step     [int]=10000
-                             , @step_delay    [sysname]=N'00:00:15'
-                             , @process_delay [sysname]=N'00:00:15'
+create procedure [job].[run] @prefix           [sysname]
+                             , @first_sequence [int] = 1
+                             , @last_sequence  [int]=10000
+                             , @sequence_delay [sysname]=N'00:00:15'
+                             , @process_delay  [sysname]=N'00:00:15'
 as
   begin
       set nocount on;
 
-      declare @step_prefix [sysname]=N'sequence_'
-              , @job       [nvarchar](1000)
-              , @step      [int] = @first_step;
+      declare @sequence_prefix [sysname]=N'sequence_'
+              , @job           [nvarchar](1000)
+              , @sequence      [int] = @first_sequence;
 
       if @prefix is null
         raiserror (N'@prefix is a required parameter.',10,1);
 
-      while @step < @last_step
+      while @sequence < @last_sequence
         begin
         /*  
-        Delay between steps so that each step is executed independently  
-        disallows running next step while any jobs (as defined by @prefix) 
-        are still running, other than the ".controller". 
+			Delay between sequences so that each sequence is executed independently  
+			disallows running next sequence while any jobs (as defined by @prefix) 
+			are still running, other than the ".controller". 
         */
             -------------------------------------  
             while exists (select *
@@ -87,10 +87,10 @@ as
                                         on [sysjobactivity].[job_history_id] = [sysjobhistory].[instance_id]
                                  join [msdb].[dbo].[sysjobs] as [sysjobs]
                                    on [sysjobactivity].[job_id] = [sysjobs].[job_id]
-                                 join [msdb].[dbo].[sysjobsteps] as [sysjobsteps]
-                                   on [sysjobactivity].[job_id] = [sysjobsteps].[job_id]
-                                      and isnull([sysjobactivity].[last_executed_step_id], 0)
-                                          + 1 = [sysjobsteps].[step_id]
+                                 join [msdb].[dbo].[sysjobsequences] as [sysjobsequences]
+                                   on [sysjobactivity].[job_id] = [sysjobsequences].[job_id]
+                                      and isnull([sysjobactivity].[last_executed_sequence_id], 0)
+                                          + 1 = [sysjobsequences].[sequence_id]
                           where  [sysjobactivity].[session_id] = (select top (1) [session_id]
                                                                   from   [msdb].[dbo].[syssessions]
                                                                   order  by [agent_start_date] desc)
@@ -98,17 +98,17 @@ as
                                  and [stop_execution_date] is null
                                  and [sysjobs].[name] like @prefix + N'%'
                                  and [sysjobs].[name] != @prefix + N'.controller')
-              waitfor delay @step_delay;
+              waitfor delay @sequence_delay;
 
             --  
-            -- run all jobs with the same "step_" in parallel 
+            -- run all jobs with the same "sequence_" in parallel 
             -------------------------------------  
             begin
                 declare [job_cursor] cursor for
                   select [sysjobs].[name]
                   from   [msdb].[dbo].[sysjobs] as [sysjobs]
-                  where  [sysjobs].[name] like @prefix + N'.' + @step_prefix
-                                               + right(N'0000'+cast(@step as [sysname]), 4)
+                  where  [sysjobs].[name] like @prefix + N'.' + @sequence_prefix
+                                               + right(N'0000'+cast(@sequence as [sysname]), 4)
                                                + N'%'
                          and ( [sysjobs].[name] != @prefix + N'.controller' );
 
@@ -141,7 +141,7 @@ as
 
             --  
             -------------------------------------  
-            set @step = @step + 1;
+            set @sequence = @sequence + 1;
         end;
   end;
 
@@ -169,9 +169,9 @@ go
 exec sys.sp_addextendedproperty
   @name = N'description',
   @value = N'[job].[run] is a job scheduling utility. It looks for jobs named 
-  "<header>.step_<step_number>". Jobs with the same step number are run in parallel. Each iteration
-  does not run until all jobs with that header name prefix complete, so while jobs with the same
-  step number are run in parallel, each step is run separate from the others. The steps are run in 
+  "<prefix>.sequence_<sequence_number>". Jobs with the same sequence number are run in parallel. Each iteration
+  does not run until all jobs with that prefix name prefix complete, so while jobs with the same
+  sequence number are run in parallel, each sequence is run separate from the others. The sequences are run in 
   order from 1 to 1000.
   ',
   @level0type = N'schema',
@@ -312,7 +312,7 @@ if exists (select *
                                           , N'procedure'
                                           , N'run'
                                           , N'parameter'
-                                          , N'@last_step'))
+                                          , N'@last_sequence'))
   exec sys.sp_dropextendedproperty
     @name = N'description',
     @level0type = N'schema',
@@ -320,21 +320,21 @@ if exists (select *
     @level1type = N'procedure',
     @level1name = N'run',
     @level2type = N'parameter',
-    @level2name = N'@last_step';
+    @level2name = N'@last_sequence';
 
 go
 
 exec sys.sp_addextendedproperty
   @name = N'description',
-  @value = N'@last_step [int]=1000 - defaults to 9999 maximum steps (<@last_step). Increase to add additional jobs or decrease
-	to only run a subset of the jobs. For example; to run all jobs except for the defragment and refresh statistics jobs, pass in @last_step=9000.
+  @value = N'@last_sequence [int]=1000 - defaults to 9999 maximum sequences (<@last_sequence). Increase to add additional jobs or decrease
+	to only run a subset of the jobs. For example; to run all jobs except for the defragment and refresh statistics jobs, pass in @last_sequence=9000.
 	As the defragment and refresh statistics jobs are "9000" jobs they would not run.',
   @level0type = N'schema',
   @level0name = N'job',
   @level1type = N'procedure',
   @level1name = N'run',
   @level2type = N'parameter',
-  @level2name = N'@last_step';
+  @level2name = N'@last_sequence';
 
 go
 
@@ -347,7 +347,7 @@ if exists (select *
                                           , N'procedure'
                                           , N'run'
                                           , N'parameter'
-                                          , N'@step_delay'))
+                                          , N'@sequence_delay'))
   exec sys.sp_dropextendedproperty
     @name = N'description',
     @level0type = N'schema',
@@ -355,20 +355,20 @@ if exists (select *
     @level1type = N'procedure',
     @level1name = N'run',
     @level2type = N'parameter',
-    @level2name = N'@step_delay';
+    @level2name = N'@sequence_delay';
 
 go
 
 exec sys.sp_addextendedproperty
   @name = N'description',
-  @value = N'@step_delay [sysname]=N''00:00:15'' -  the delay between steps, used to give the
-	job time to start and appear in [msdb] so that the step check can pick it up as a running job.',
+  @value = N'@sequence_delay [sysname]=N''00:00:15'' -  the delay between sequences, used to give the
+	job time to start and appear in [msdb] so that the sequence check can pick it up as a running job.',
   @level0type = N'schema',
   @level0name = N'job',
   @level1type = N'procedure',
   @level1name = N'run',
   @level2type = N'parameter',
-  @level2name = N'@step_delay';
+  @level2name = N'@sequence_delay';
 
 go
 
@@ -396,7 +396,7 @@ go
 exec sys.sp_addextendedproperty
   @name = N'description',
   @value = N'@process_delay [sysname]=N''00:00:15'' - the delay after each job is started, used to give the
-	job time to start and appear in [msdb] so that the step check can pick it up as a running job.',
+	job time to start and appear in [msdb] so that the sequence check can pick it up as a running job.',
   @level0type = N'schema',
   @level0name = N'job',
   @level1type = N'procedure',
