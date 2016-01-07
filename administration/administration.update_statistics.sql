@@ -1,22 +1,21 @@
 /*
 	Change to target database prior to running.
 */
-if schema_id(N'administration') is null
-  execute (N'create schema administration');
+IF schema_id(N'administration') IS NULL
+  EXECUTE (N'CREATE SCHEMA administration');
 
 go
 
-set ansi_nulls on;
+SET ansi_nulls ON;
 
 go
 
-set quoted_identifier on;
+SET quoted_identifier ON;
 
 go
 
-if object_id(N'[administration].[update_statistics]'
-             , N'P') is not null
-  drop procedure [administration].[update_statistics];
+IF object_id(N'[administration].[update_statistics]', N'P') IS NOT NULL
+  DROP PROCEDURE [administration].[update_statistics];
 
 go
 
@@ -58,92 +57,91 @@ go
 	execute [administration].[update_statistics];
 	
 */
-create procedure [administration].[update_statistics]
-as
-  begin
-      declare @view  nvarchar(1024)
-              , @sql nvarchar(max);
+CREATE PROCEDURE [administration].[update_statistics] @table_filter [SYSNAME] = NULL
+AS
+  BEGIN
+      DECLARE @view  NVARCHAR(1024)
+              , @sql NVARCHAR(max);
 
       --
-      -- update statistics on all objects other than indexed views
       -----------------------------------------------
-      print N'Executing [sys].[sp_updatestats] to update statistics on all objects other than indexed views.';
+      IF @table_filter IS NULL
+        BEGIN
+            PRINT N'Executing [sys].[sp_updatestats] to update statistics on all objects other than indexed views.';
 
-      execute [sys].[sp_updatestats];
+			--
+            -- update statistics on all objects other than indexed views
+            -------------------------------------
+            EXECUTE [sys].[sp_updatestats];
 
-      print N'Executing [sys].[sp_updatestats] complete.';
+            PRINT N'Executing [sys].[sp_updatestats] complete.';
 
-      --
-      -- update statistics for indexed views
-      -----------------------------------------------
-      print N'Updating statistics for indexed views.';
+            --
+            -- update statistics for indexed views
+            -------------------------------------
+            PRINT N'Updating statistics for indexed views.';
 
-      declare [view_cursor] cursor local fast_forward for
-        select quotename([schemas].name, N'[') + N'.'
-               + quotename([objects].name, N'[') as view_name
-        from   [sys].[objects] [objects]
-               inner join [sys].[schemas] [schemas]
-                       on [schemas].[schema_id] = [objects].[schema_id]
-               inner join [sys].[indexes] [indexes]
-                       on [indexes].[object_id] = [objects].[object_id]
-               inner join [sys].[sysindexes] [sysindexes]
-                       on [sysindexes].id = [indexes].[object_id]
-                          and [sysindexes].indid = [indexes].index_id
-        where  [objects].type = 'V'
-        group  by quotename([schemas].name, N'[') + N'.'
-                  + quotename([objects].name, N'[')
-        having max([sysindexes].rowmodctr) > 0;
+            DECLARE [view_cursor] CURSOR local fast_forward FOR
+              SELECT quotename([schemas].[name], N'[') + N'.'
+                     + quotename([objects].[name], N'[') AS [view_name]
+              FROM   [sys].[objects] [objects]
+                     INNER JOIN [sys].[schemas] [schemas]
+                             ON [schemas].[schema_id] = [objects].[schema_id]
+                     INNER JOIN [sys].[indexes] [indexes]
+                             ON [indexes].[object_id] = [objects].[object_id]
+                     INNER JOIN [sys].[sysindexes] [sysindexes]
+                             ON [sysindexes].id = [indexes].[object_id]
+                                AND [sysindexes].[indid] = [indexes].[index_id]
+              WHERE  [objects].[type] = 'V'
+              GROUP  BY quotename([schemas].[name], N'[') + N'.'
+                        + quotename([objects].[name], N'[')
+              HAVING max([sysindexes].[rowmodctr]) > 0;
+        END;
 
       --
       -----------------------------------------
-      begin
-          open [view_cursor];
+      BEGIN
+          OPEN [view_cursor];
 
-          fetch next from [view_cursor] into @view;
+          FETCH next FROM [view_cursor] INTO @view;
 
-          while ( @@fetch_status = 0 )
-            begin
-                print N'   Updating stats for view ' + @view;
+          WHILE ( @@FETCH_STATUS = 0 )
+            BEGIN
+                PRINT N'   Updating stats for view ' + @view;
 
-                set @sql = N'update statistics ' + @view;
+                SET @sql = N'update statistics ' + @view;
 
-                execute (@sql);
+                EXECUTE (@sql);
 
-                fetch next from [view_cursor] into @view;
-            end;
+                FETCH next FROM [view_cursor] INTO @view;
+            END;
 
-          close [view_cursor];
+          CLOSE [view_cursor];
 
-          deallocate [view_cursor];
-      end;
+          DEALLOCATE [view_cursor];
+      END;
 
-      print N'Updating statistics for indexed views. complete.';
-  end;
+      PRINT N'Updating statistics for indexed views. complete.';
+  END;
 
 go
 
 --
 ------------------------------------------------- 
-if exists (select *
-           from   fn_listextendedproperty(N'description'
-                                          , N'schema'
-                                          , N'administration'
-                                          , N'procedure'
-                                          , N'update_statistics'
-                                          , default
-                                          , default))
-  exec [sys].sp_dropextendedproperty
-    @name = N'description',
-    @level0type = N'schema',
-    @level0name = N'administration',
-    @level1type = N'procedure',
-    @level1name = N'update_statistics';
+IF EXISTS (SELECT *
+           FROM   fn_listextendedproperty(N'description', N'schema', N'administration', N'procedure', N'update_statistics', DEFAULT, DEFAULT))
+  EXEC [sys].sp_dropextendedproperty
+    @name         = N'description'
+    , @level0type = N'schema'
+    , @level0name = N'administration'
+    , @level1type = N'procedure'
+    , @level1name = N'update_statistics';
 
 go
 
-exec [sys].sp_addextendedproperty
-  @name = N'description',
-  @value = N'Procedure to update all statistics including indexed views..
+EXEC [sys].sp_addextendedproperty
+  @name         = N'description'
+  , @value      = N'Procedure to update all statistics including indexed views..
   Based on a script from:
   Rhys Jones, 7th Feb 2008
 	http://www.rmjcs.com/SQLServer/ThingsYouMightNotKnow/sp_updatestatsDoesNotUpdateIndexedViewStats/tabid/414/Default.aspx
@@ -151,97 +149,153 @@ exec [sys].sp_addextendedproperty
 	Only does an update if rowmodctr is non-zero.
 	No error handling, does not deal with disabled clustered indexes.
 	Does not respect existing sample rate.
-	[sys].sysindexes.rowmodctr is not completely reliable in SQL Server 2005.',
-  @level0type = N'schema',
-  @level0name = N'administration',
-  @level1type = N'procedure',
-  @level1name = N'update_statistics';
+	[sys].sysindexes.rowmodctr is not completely reliable in SQL Server 2005.'
+  , @level0type = N'schema'
+  , @level0name = N'administration'
+  , @level1type = N'procedure'
+  , @level1name = N'update_statistics';
 
 go
 
 --
 ------------------------------------------------- 
-if exists (select *
-           from   fn_listextendedproperty(N'revision_20150810'
-                                          , N'schema'
-                                          , N'administration'
-                                          , N'procedure'
-                                          , N'update_statistics'
-                                          , default
-                                          , default))
-  exec [sys].sp_dropextendedproperty
-    @name = N'revision_20150810',
-    @level0type = N'schema',
-    @level0name = N'administration',
-    @level1type = N'procedure',
-    @level1name = N'update_statistics';
+IF EXISTS (SELECT *
+           FROM   fn_listextendedproperty(N'TODO', N'schema', N'administration', N'procedure', N'update_statistics', DEFAULT, DEFAULT))
+  EXEC [sys].sp_dropextendedproperty
+    @name         = N'TODO'
+    , @level0type = N'schema'
+    , @level0name = N'administration'
+    , @level1type = N'procedure'
+    , @level1name = N'update_statistics';
 
 go
 
-exec [sys].sp_addextendedproperty
-  @name = N'revision_20150810',
-  @value = N'KELightsey@gmail.com � created.',
-  @level0type = N'schema',
-  @level0name = N'administration',
-  @level1type = N'procedure',
-  @level1name = N'update_statistics';
+EXEC [sys].sp_addextendedproperty
+  @name         = N'TODO'
+  , @value      = N'Refactor to use @table_filter properly.'
+  , @level0type = N'schema'
+  , @level0name = N'administration'
+  , @level1type = N'procedure'
+  , @level1name = N'update_statistics';
+
+go
+
+
+--
+------------------------------------------------- 
+IF EXISTS (SELECT *
+           FROM   fn_listextendedproperty(N'revision_20160106', N'schema', N'administration', N'procedure', N'update_statistics', DEFAULT, DEFAULT))
+  EXEC [sys].sp_dropextendedproperty
+    @name         = N'revision_20160106'
+    , @level0type = N'schema'
+    , @level0name = N'administration'
+    , @level1type = N'procedure'
+    , @level1name = N'update_statistics';
+
+go
+
+EXEC [sys].sp_addextendedproperty
+  @name         = N'revision_20160106'
+  , @value      = N'KELightsey@gmail.com – Added @table_filter.'
+  , @level0type = N'schema'
+  , @level0name = N'administration'
+  , @level1type = N'procedure'
+  , @level1name = N'update_statistics';
 
 go
 
 --
 ------------------------------------------------- 
-if exists (select *
-           from   fn_listextendedproperty(N'package_administration'
-                                          , N'schema'
-                                          , N'administration'
-                                          , N'procedure'
-                                          , N'update_statistics'
-                                          , default
-                                          , default))
-  exec [sys].sp_dropextendedproperty
-    @name = N'package_administration',
-    @level0type = N'schema',
-    @level0name = N'administration',
-    @level1type = N'procedure',
-    @level1name = N'update_statistics';
+IF EXISTS (SELECT *
+           FROM   fn_listextendedproperty(N'revision_20150810', N'schema', N'administration', N'procedure', N'update_statistics', DEFAULT, DEFAULT))
+  EXEC [sys].sp_dropextendedproperty
+    @name         = N'revision_20150810'
+    , @level0type = N'schema'
+    , @level0name = N'administration'
+    , @level1type = N'procedure'
+    , @level1name = N'update_statistics';
 
 go
 
-exec [sys].sp_addextendedproperty
-  @name = N'package_administration',
-  @value = N'label_only',
-  @level0type = N'schema',
-  @level0name = N'administration',
-  @level1type = N'procedure',
-  @level1name = N'update_statistics';
+EXEC [sys].sp_addextendedproperty
+  @name         = N'revision_20150810'
+  , @value      = N'KELightsey@gmail.com – created.'
+  , @level0type = N'schema'
+  , @level0name = N'administration'
+  , @level1type = N'procedure'
+  , @level1name = N'update_statistics';
 
 go
 
 --
 ------------------------------------------------- 
-if exists (select *
-           from   fn_listextendedproperty(N'execute_as'
-                                          , N'schema'
-                                          , N'administration'
-                                          , N'procedure'
-                                          , N'update_statistics'
-                                          , default
-                                          , default))
-  exec [sys].sp_dropextendedproperty
-    @name = N'execute_as',
-    @level0type = N'schema',
-    @level0name = N'administration',
-    @level1type = N'procedure',
-    @level1name = N'update_statistics';
+IF EXISTS (SELECT *
+           FROM   fn_listextendedproperty(N'package_administration', N'schema', N'administration', N'procedure', N'update_statistics', DEFAULT, DEFAULT))
+  EXEC [sys].sp_dropextendedproperty
+    @name         = N'package_administration'
+    , @level0type = N'schema'
+    , @level0name = N'administration'
+    , @level1type = N'procedure'
+    , @level1name = N'update_statistics';
 
 go
 
-exec [sys].sp_addextendedproperty
-  @name = N'execute_as',
-  @value = N'execute [administration].[update_statistics];',
-  @level0type = N'schema',
-  @level0name = N'administration',
-  @level1type = N'procedure',
-  @level1name = N'update_statistics';
+EXEC [sys].sp_addextendedproperty
+  @name         = N'package_administration'
+  , @value      = N'label_only'
+  , @level0type = N'schema'
+  , @level0name = N'administration'
+  , @level1type = N'procedure'
+  , @level1name = N'update_statistics';
+
+go
+
+--
+------------------------------------------------- 
+IF EXISTS (SELECT *
+           FROM   fn_listextendedproperty(N'execute_as', N'schema', N'administration', N'procedure', N'update_statistics', DEFAULT, DEFAULT))
+  EXEC [sys].sp_dropextendedproperty
+    @name         = N'execute_as'
+    , @level0type = N'schema'
+    , @level0name = N'administration'
+    , @level1type = N'procedure'
+    , @level1name = N'update_statistics';
+
+go
+
+EXEC [sys].sp_addextendedproperty
+  @name         = N'execute_as'
+  , @value      = N'execute [administration].[update_statistics];'
+  , @level0type = N'schema'
+  , @level0name = N'administration'
+  , @level1type = N'procedure'
+  , @level1name = N'update_statistics';
+
+go
+
+--
+------------------------------------------------- 
+IF EXISTS (SELECT *
+           FROM   fn_listextendedproperty(N'description', N'schema', N'administration', N'procedure', N'update_statistics', N'parameter', N'@table_filter'))
+  EXEC sys.sp_dropextendedproperty
+    @name         = N'description'
+    , @level0type = N'schema'
+    , @level0name = N'administration'
+    , @level1type = N'procedure'
+    , @level1name = N'update_statistics'
+    , @level2type = N'parameter'
+    , @level2name = N'@table_filter';
+
+go
+
+EXEC sys.sp_addextendedproperty
+  @name         = N'description'
+  , @value      = N'@table [sysname] NOT NULL - optional parameter, if used, constrains UPDATE STATISTICS to tables matching on LIKE syntax.'
+  , @level0type = N'schema'
+  , @level0name = N'administration'
+  , @level1type = N'procedure'
+  , @level1name = N'update_statistics'
+  , @level2type = N'parameter'
+  , @level2name = N'@table_filter';
 
 go 
