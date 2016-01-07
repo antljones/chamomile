@@ -1,14 +1,13 @@
 /*
 	Change to target database prior to running.
 */
-if schema_id(N'administration') is null
-  execute (N'create schema administration');
+IF schema_id(N'administration') IS NULL
+  EXECUTE (N'CREATE SCHEMA administration');
 
 go
 
-if object_id(N'[administration].[defragment_index]'
-             , N'P') is not null
-  drop procedure [administration].[defragment_index];
+IF object_id(N'[administration].[defragment_index]', N'P') IS NOT NULL
+  DROP PROCEDURE [administration].[defragment_index];
 
 go
 
@@ -49,194 +48,215 @@ go
 	execute [administration].[defragment_index];
 	
 */
-create procedure [administration].[defragment_index] @maximum_fragmentation [int] = 25
-                                                     , @fillfactor          [int] = 90
-as
-  begin
-      declare @schema                       [sysname],
-              @table                        [sysname],
-              @index                        [sysname],
-              @average_fragmentation_before [int],
-              @average_fragmentation_after  [int],
-              @sql                          [nvarchar](max);
+CREATE PROCEDURE [administration].[defragment_index] @maximum_fragmentation [INT] = 25
+                                                     , @fillfactor          [INT] = 90
+                                                     , @table_filter        [SYSNAME] = NULL
+AS
+  BEGIN
+      DECLARE @schema                         [SYSNAME]
+              , @table                        [SYSNAME]
+              , @index                        [SYSNAME]
+              , @average_fragmentation_before [INT]
+              , @average_fragmentation_after  [INT]
+              , @sql                          [NVARCHAR](max);
       --
       -------------------------------------------
-      declare [table_cursor] cursor for
-        select object_schema_name([dm_db_index_physical_stats].[object_id])                       as [schema]
-               , object_name([dm_db_index_physical_stats].[object_id])                            as [table]
-               , [indexes].[name]                                                                 as [index]
-               , cast([dm_db_index_physical_stats].[avg_fragmentation_in_percent] * 100 as [int]) as [average_fragmentation_before]
-        from   sys.dm_db_index_physical_stats(db_id()
-                                              , null
-                                              , null
-                                              , null
-                                              , 'LIMITED') as [dm_db_index_physical_stats]
-               inner join sys.[indexes] as [indexes]
-                       on [dm_db_index_physical_stats].[object_id] = [indexes].[object_id]
-                          and [dm_db_index_physical_stats].index_id = [indexes].index_id
-        where  [dm_db_index_physical_stats].[avg_fragmentation_in_percent] * 100 > @maximum_fragmentation;
+      DECLARE [table_cursor] CURSOR FOR
+        SELECT object_schema_name([dm_db_index_physical_stats].[object_id])                       AS [schema]
+               , object_name([dm_db_index_physical_stats].[object_id])                            AS [table]
+               , [indexes].[name]                                                                 AS [index]
+               , cast([dm_db_index_physical_stats].[avg_fragmentation_in_percent] * 100 AS [INT]) AS [average_fragmentation_before]
+        FROM   sys.dm_db_index_physical_stats(db_id(), NULL, NULL, NULL, 'LIMITED') AS [dm_db_index_physical_stats]
+               INNER JOIN sys.[indexes] AS [indexes]
+                       ON [dm_db_index_physical_stats].[object_id] = [indexes].[object_id]
+                          AND [dm_db_index_physical_stats].index_id = [indexes].index_id
+        WHERE  [dm_db_index_physical_stats].[avg_fragmentation_in_percent] * 100 > @maximum_fragmentation
+               AND ( ( object_name([indexes].[object_id]) LIKE N'%' + @table_filter + N'%' )
+                      OR ( @table_filter IS NULL ) );
 
       --
-      begin
-          open [table_cursor];
+      BEGIN
+          OPEN [table_cursor];
 
-          fetch next from [table_cursor] into @schema, @table, @index, @average_fragmentation_before;
+          FETCH next FROM [table_cursor] INTO @schema, @table, @index, @average_fragmentation_before;
 
-          while @@fetch_status = 0
-            begin
-                set @sql = 'alter index [' + @index + N'] on [' + @schema
+          WHILE @@FETCH_STATUS = 0
+            BEGIN
+                SET @sql = 'alter index [' + @index + N'] on [' + @schema
                            + N'].[' + @table
                            + '] rebuild with (fillfactor='
-                           + cast(@fillfactor as [sysname]) + ')';
+                           + cast(@fillfactor AS [SYSNAME]) + ')';
 
                 --
                 -------------------------------
-                if @sql is not null
-                  begin
-                      execute (@sql);
+                IF @sql IS NOT NULL
+                  BEGIN
+                      EXECUTE (@sql);
 
                       --
                       -- output
                       ---------------------------
-                      select @sql                                                                               as [@sql]
-                             , @average_fragmentation_before                                                    as [average_fragmentation_before]
-                             , cast([dm_db_index_physical_stats].[avg_fragmentation_in_percent] * 100 as [int]) as [average_fragmentation_after]
-                      from   sys.dm_db_index_physical_stats(db_id()
-                                                            , null
-                                                            , null
-                                                            , null
-                                                            , 'LIMITED') as [dm_db_index_physical_stats]
-                             inner join sys.[indexes] as [indexes]
-                                     on [dm_db_index_physical_stats].[object_id] = [indexes].[object_id]
-                                        and [dm_db_index_physical_stats].index_id = [indexes].index_id
-                      where  object_schema_name([dm_db_index_physical_stats].[object_id]) = @schema
-                             and object_name([dm_db_index_physical_stats].[object_id]) = @table
-                             and [indexes].[name] = @index;
-                  end;
+                      SELECT @sql                                                                               AS [@sql]
+                             , @average_fragmentation_before                                                    AS [average_fragmentation_before]
+                             , cast([dm_db_index_physical_stats].[avg_fragmentation_in_percent] * 100 AS [INT]) AS [average_fragmentation_after]
+                      FROM   sys.dm_db_index_physical_stats(db_id(), NULL, NULL, NULL, 'LIMITED') AS [dm_db_index_physical_stats]
+                             INNER JOIN sys.[indexes] AS [indexes]
+                                     ON [dm_db_index_physical_stats].[object_id] = [indexes].[object_id]
+                                        AND [dm_db_index_physical_stats].index_id = [indexes].index_id
+                      WHERE  object_schema_name([dm_db_index_physical_stats].[object_id]) = @schema
+                             AND object_name([dm_db_index_physical_stats].[object_id]) = @table
+                             AND [indexes].[name] = @index;
+                  END;
 
-                fetch next from [table_cursor] into @schema, @table, @index, @average_fragmentation_before;
-            end
+                FETCH next FROM [table_cursor] INTO @schema, @table, @index, @average_fragmentation_before;
+            END
 
-          close [table_cursor];
+          CLOSE [table_cursor];
 
-          deallocate [table_cursor];
-      end;
-  end;
+          DEALLOCATE [table_cursor];
+      END;
+  END;
 
 go
 
 --
 ------------------------------------------------- 
-if exists (select *
-           from   fn_listextendedproperty(N'description'
-                                          , N'schema'
-                                          , N'administration'
-                                          , N'procedure'
-                                          , N'defragment_index'
-                                          , default
-                                          , default))
-  exec sys.sp_dropextendedproperty
-    @name = N'description',
-    @level0type = N'schema',
-    @level0name = N'administration',
-    @level1type = N'procedure',
-    @level1name = N'defragment_index';
+IF EXISTS (SELECT *
+           FROM   fn_listextendedproperty(N'description', N'schema', N'administration', N'procedure', N'defragment_index', DEFAULT, DEFAULT))
+  EXEC sys.sp_dropextendedproperty
+    @name         = N'description'
+    , @level0type = N'schema'
+    , @level0name = N'administration'
+    , @level1type = N'procedure'
+    , @level1name = N'defragment_index';
 
 go
 
-exec sys.sp_addextendedproperty
-  @name = N'description',
-  @value = N'Rebuild all indexes over @maximum_fragmentation.',
-  @level0type = N'schema',
-  @level0name = N'administration',
-  @level1type = N'procedure',
-  @level1name = N'defragment_index';
+EXEC sys.sp_addextendedproperty
+  @name         = N'description'
+  , @value      = N'Rebuild all indexes over @maximum_fragmentation.'
+  , @level0type = N'schema'
+  , @level0name = N'administration'
+  , @level1type = N'procedure'
+  , @level1name = N'defragment_index';
 
 go
 
 --
 ------------------------------------------------- 
-if exists (select *
-           from   fn_listextendedproperty(N'revision_20150810'
-                                          , N'schema'
-                                          , N'administration'
-                                          , N'procedure'
-                                          , N'defragment_index'
-                                          , default
-                                          , default))
-  exec sys.sp_dropextendedproperty
-    @name = N'revision_20150810',
-    @level0type = N'schema',
-    @level0name = N'administration',
-    @level1type = N'procedure',
-    @level1name = N'defragment_index';
+IF EXISTS (SELECT *
+           FROM   fn_listextendedproperty(N'revision_20160106', N'schema', N'administration', N'procedure', N'defragment_index', DEFAULT, DEFAULT))
+  EXEC sys.sp_dropextendedproperty
+    @name         = N'revision_20160106'
+    , @level0type = N'schema'
+    , @level0name = N'administration'
+    , @level1type = N'procedure'
+    , @level1name = N'defragment_index';
 
 go
 
-exec sys.sp_addextendedproperty
-  @name = N'revision_20150810',
-  @value = N'KELightsey@gmail.com � created.',
-  @level0type = N'schema',
-  @level0name = N'administration',
-  @level1type = N'procedure',
-  @level1name = N'defragment_index';
+EXEC sys.sp_addextendedproperty
+  @name         = N'revision_20160106'
+  , @value      = N'KELightsey@gmail.com – Added @table_filter parameter to allow defragging for only a specified table (using LIKE constraint).'
+  , @level0type = N'schema'
+  , @level0name = N'administration'
+  , @level1type = N'procedure'
+  , @level1name = N'defragment_index';
 
 go
 
 --
 ------------------------------------------------- 
-if exists (select *
-           from   fn_listextendedproperty(N'package_administration'
-                                          , N'schema'
-                                          , N'administration'
-                                          , N'procedure'
-                                          , N'defragment_index'
-                                          , default
-                                          , default))
-  exec sys.sp_dropextendedproperty
-    @name = N'package_administration',
-    @level0type = N'schema',
-    @level0name = N'administration',
-    @level1type = N'procedure',
-    @level1name = N'defragment_index';
+IF EXISTS (SELECT *
+           FROM   fn_listextendedproperty(N'revision_20150810', N'schema', N'administration', N'procedure', N'defragment_index', DEFAULT, DEFAULT))
+  EXEC sys.sp_dropextendedproperty
+    @name         = N'revision_20150810'
+    , @level0type = N'schema'
+    , @level0name = N'administration'
+    , @level1type = N'procedure'
+    , @level1name = N'defragment_index';
 
 go
 
-exec sys.sp_addextendedproperty
-  @name = N'package_administration',
-  @value = N'label_only',
-  @level0type = N'schema',
-  @level0name = N'administration',
-  @level1type = N'procedure',
-  @level1name = N'defragment_index';
+EXEC sys.sp_addextendedproperty
+  @name         = N'revision_20150810'
+  , @value      = N'KELightsey@gmail.com – created.'
+  , @level0type = N'schema'
+  , @level0name = N'administration'
+  , @level1type = N'procedure'
+  , @level1name = N'defragment_index';
 
 go
 
 --
 ------------------------------------------------- 
-if exists (select *
-           from   fn_listextendedproperty(N'execute_as'
-                                          , N'schema'
-                                          , N'administration'
-                                          , N'procedure'
-                                          , N'defragment_index'
-                                          , default
-                                          , default))
-  exec sys.sp_dropextendedproperty
-    @name = N'execute_as',
-    @level0type = N'schema',
-    @level0name = N'administration',
-    @level1type = N'procedure',
-    @level1name = N'defragment_index';
+IF EXISTS (SELECT *
+           FROM   fn_listextendedproperty(N'package_administration', N'schema', N'administration', N'procedure', N'defragment_index', DEFAULT, DEFAULT))
+  EXEC sys.sp_dropextendedproperty
+    @name         = N'package_administration'
+    , @level0type = N'schema'
+    , @level0name = N'administration'
+    , @level1type = N'procedure'
+    , @level1name = N'defragment_index';
 
 go
 
-exec sys.sp_addextendedproperty
-  @name = N'execute_as',
-  @value = N'execute [administration].[defragment_index];',
-  @level0type = N'schema',
-  @level0name = N'administration',
-  @level1type = N'procedure',
-  @level1name = N'defragment_index';
+EXEC sys.sp_addextendedproperty
+  @name         = N'package_administration'
+  , @value      = N'label_only'
+  , @level0type = N'schema'
+  , @level0name = N'administration'
+  , @level1type = N'procedure'
+  , @level1name = N'defragment_index';
+
+go
+
+--
+------------------------------------------------- 
+IF EXISTS (SELECT *
+           FROM   fn_listextendedproperty(N'execute_as', N'schema', N'administration', N'procedure', N'defragment_index', DEFAULT, DEFAULT))
+  EXEC sys.sp_dropextendedproperty
+    @name         = N'execute_as'
+    , @level0type = N'schema'
+    , @level0name = N'administration'
+    , @level1type = N'procedure'
+    , @level1name = N'defragment_index';
+
+go
+
+EXEC sys.sp_addextendedproperty
+  @name         = N'execute_as'
+  , @value      = N'execute [administration].[defragment_index];'
+  , @level0type = N'schema'
+  , @level0name = N'administration'
+  , @level1type = N'procedure'
+  , @level1name = N'defragment_index';
+
+go
+
+--
+------------------------------------------------- 
+IF EXISTS (SELECT *
+           FROM   fn_listextendedproperty(N'description', N'schema', N'administration', N'procedure', N'defragment_index', N'parameter', N'@table_filter'))
+  EXEC sys.sp_dropextendedproperty
+    @name         = N'description'
+    , @level0type = N'schema'
+    , @level0name = N'administration'
+    , @level1type = N'procedure'
+    , @level1name = N'defragment_index'
+    , @level2type = N'parameter'
+    , @level2name = N'@table_filter';
+
+go
+
+EXEC sys.sp_addextendedproperty
+  @name         = N'description'
+  , @value      = N'@table [sysname] NOT NULL - optional parameter, if used, constrains the defrag to tables matching on LIKE syntax.'
+  , @level0type = N'schema'
+  , @level0name = N'administration'
+  , @level1type = N'procedure'
+  , @level1name = N'defragment_index'
+  , @level2type = N'parameter'
+  , @level2name = N'@table_filter';
 
 go 
