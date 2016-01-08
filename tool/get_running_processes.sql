@@ -71,7 +71,7 @@ where  [name] like N'equity_load%';
 
 select *
 from   sys.dm_tran_active_transactions
-where  name like N'%claimHeaderFact%'
+where  name like N'%<table_name>%'
 order  by name;
 
 -- http://stackoverflow.com/questions/980143/how-to-check-that-there-is-transaction-that-is-not-yet-committed-in-sql-server-2
@@ -97,7 +97,7 @@ where  eses.session_id is not null;
 --
 -- or 
 select count(*)
-from   [dbo].[claimlineft] with (nolock)
+from   [dbo].[<table_name>] with (nolock)
 
 --
 -------------------------------------------------
