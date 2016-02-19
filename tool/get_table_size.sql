@@ -24,7 +24,6 @@
 	--
 	-- references
 	---------------------------------------------
-select * from [DWExternal].[dbo].[ClinicModel]
 */
 select [schemas].[name]                                                                   as [schema]
        , [tables].[name]                                                                  as [table]
