@@ -3,30 +3,35 @@
 --
 -- build parameters
 --------------------------------------------------------------------------
-declare @list [nvarchar](max);
+DECLARE @list [nvarchar](MAX);
 
-select @list = coalesce(@list + N', ', N'') + N'@'
-               + columns.name + case
+SELECT @list = COALESCE(@list + N', ', N'') + N'@'
+               + [columns].[name] + CASE
                --
-               when types.name = N'varchar' then N' [nvarchar] ('+cast(columns.max_length as [sysname]) + N')'
+               WHEN [types].[name] IN ( N'varchar', N'char' ) THEN N' [' + [types].[name] + '] (' + CAST([columns].[max_length] AS [sysname]) + N')'
                --
-               when types.name = N'decimal' then N' [' +types.name + '] ('+ cast(columns.precision as [sysname])+N', '+cast(columns.scale as [sysname])+')'
+               WHEN [types].[name] IN ( N'nvarchar', N'nchar' ) THEN N' [' + [types].[name] + '] (' + CAST([columns].[max_length] / 2 AS [sysname]) + N')'
                --
-               else N' [' +types.name + '] '
+               WHEN [types].[name] = N'decimal' THEN N' [' + [types].[name] + '] (' + CAST([columns].[precision] AS [sysname]) + N', ' + CAST([columns].[scale] AS [sysname]) + ')'
                --
-               end
+               ELSE N' [' + [types].[name] + '] '
+               --
+               END
                --
                + N' = null'
-from   sys.columns as columns
-       join sys.tables as tables
-         on tables.object_id = columns.object_id
-       join sys.types as types
-         on types.user_type_id = columns.user_type_id
-where  object_schema_name(tables.object_id) = N'equity'
-       and tables.name = N'order'
-order  by columns.name;
+FROM   [sys].[columns] AS [columns]
+       JOIN [sys].[tables] AS [tables]
+         ON [tables].[object_id] = [columns].[object_id]
+       JOIN [sys].[types] AS [types]
+         ON [types].[user_type_id] = [columns].[user_type_id]
+       JOIN [sys].[schemas] AS [schemas]
+         ON [schemas].[schema_id] = [tables].[schema_id]
+WHERE  [schemas].[name] = N'dbo'
+       AND [tables].[name] = N'Player'
+--ORDER BY [columns].[column_id];
+ORDER  BY [columns].[name];
 
-select @list;
+SELECT @list; 
 
 -- todo - build from remote database, call procedure remotely?
 -- todo - create views
