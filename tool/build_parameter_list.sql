@@ -3,9 +3,12 @@
 --
 -- build parameters
 --------------------------------------------------------------------------
-DECLARE @list [nvarchar](MAX);
+DECLARE @list     [nvarchar](MAX)
+        , @prefix [sysname] = N'@'
+        , @schema [sysname] = N'schema'
+        , @object [sysname] = N'table or view';
 
-SELECT @list = COALESCE(@list + N', ', N'') + N'@'
+SELECT @list = COALESCE(@list + N', ', N'') + @prefix
                + [columns].[name] + CASE
                --
                WHEN [types].[name] IN ( N'varchar', N'char' ) THEN N' [' + [types].[name] + '] (' + CAST([columns].[max_length] AS [sysname]) + N')'
@@ -26,12 +29,13 @@ FROM   [sys].[columns] AS [columns]
          ON [types].[user_type_id] = [columns].[user_type_id]
        JOIN [sys].[schemas] AS [schemas]
          ON [schemas].[schema_id] = [tables].[schema_id]
-WHERE  [schemas].[name] = N'dbo'
-       AND [tables].[name] = N'Player'
+WHERE  [schemas].[name] = @schema
+       AND [tables].[name] = @object
 --ORDER BY [columns].[column_id];
 ORDER  BY [columns].[name];
 
 SELECT @list; 
+
 
 -- todo - build from remote database, call procedure remotely?
 -- todo - create views
