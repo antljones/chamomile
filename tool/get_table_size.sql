@@ -6,24 +6,6 @@
 		If you want to separate table space from index space, you need to use AND i.index_id IN (0,1) 
 			for the table space (index_id = 0 is the heap space, index_id = 1 is the size of the 
 			clustered index = data pages) and AND i.index_id > 1 for the index-only space
-
-	--
-	--	notes
-	---------------------------------------------
-		this presentation is designed to be run incrementally a code block at a time. 
-		code blocks are delineated as:
-
-		--
-		-- code block begin
-		-----------------------------------------
-			<run code here>
-		-----------------------------------------
-		-- code block end
-		--
-	
-	--
-	-- references
-	---------------------------------------------
 */
 select [schemas].[name]                                                                   	as [schema]
        , [tables].[name]                                                                  	as [table]
