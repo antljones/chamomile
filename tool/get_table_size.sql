@@ -42,11 +42,11 @@ from   [sys].[tables] as [tables]
        inner join [sys].[allocation_units] as [allocation_units]
                on [partitions].[partition_id] = [allocation_units].[container_id]
 where  [tables].[name] not like 'dt%'
-       and [tables].is_ms_shipped = 0
+       and [tables].[is_ms_shipped] = 0
        and [indexes].[object_id] > 255
 group  by [schemas].[name]
           , [tables].[name]
           , [partitions].[rows]
---order by sum([allocation_units].total_pages) * 8;
+--order by sum([allocation_units].[total_pages]) * 8;
 --order by [schemas].[name], [tables].[name];
 order  by [row_count] desc; 
