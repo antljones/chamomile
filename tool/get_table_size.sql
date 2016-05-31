@@ -7,28 +7,29 @@
 			for the table space (index_id = 0 is the heap space, index_id = 1 is the size of the 
 			clustered index = data pages) and AND i.index_id > 1 for the index-only space
 */
-select [schemas].[name]                                                                   	as [schema]
-       , [tables].[name]                                                                  	as [table]
-       , [partitions].[rows]                                                              	as [row_count]
-       , sum([allocation_units].[total_pages]) * 8                                          	as [total_space_kb]
-       , sum([allocation_units].[used_pages]) * 8                                           	as [used_space_kb]
-       , ( sum([allocation_units].[total_pages]) - sum([allocation_units].[used_pages]) ) * 8 	as [unused_space_kb]
-from   [sys].[tables] as [tables]
-       inner join [sys].[schemas] as [schemas]
-               on [schemas].[schema_id] = [tables].[schema_id]
-       inner join [sys].[indexes] as [indexes]
-               on [tables].[object_id] = [indexes].[object_id]
-       inner join [sys].[partitions] as [partitions]
-               on [indexes].[object_id] = [partitions].[object_id]
-                  and [indexes].[index_id] = [partitions].[index_id]
-       inner join [sys].[allocation_units] as [allocation_units]
-               on [partitions].[partition_id] = [allocation_units].[container_id]
-where  [tables].[name] not like 'dt%'
-       and [tables].[is_ms_shipped] = 0
-       and [indexes].[object_id] > 255
-group  by [schemas].[name]
+SELECT [schemas].[name]                                                                       AS [schema]
+       , [tables].[name]                                                                      AS [table]
+       , [partitions].[rows]                                                                  AS [row_count]
+       , SUM([allocation_units].[total_pages]) * 8                                            AS [total_space_kb]
+       , SUM([allocation_units].[used_pages]) * 8                                             AS [used_space_kb]
+       , ( SUM([allocation_units].[total_pages]) - SUM([allocation_units].[used_pages]) ) * 8 AS [unused_space_kb]
+FROM   [sys].[tables] AS [tables]
+       INNER JOIN [sys].[schemas] AS [schemas]
+               ON [schemas].[schema_id] = [tables].[schema_id]
+       INNER JOIN [sys].[indexes] AS [indexes]
+               ON [tables].[object_id] = [indexes].[object_id]
+       INNER JOIN [sys].[partitions] AS [partitions]
+               ON [indexes].[object_id] = [partitions].[object_id]
+                  AND [indexes].[index_id] = [partitions].[index_id]
+       INNER JOIN [sys].[allocation_units] AS [allocation_units]
+               ON [partitions].[partition_id] = [allocation_units].[container_id]
+WHERE  [tables].[name] NOT LIKE 'dt%'
+       AND [tables].[is_ms_shipped] = 0
+       AND [indexes].[object_id] > 255
+GROUP  BY [schemas].[name]
           , [tables].[name]
           , [partitions].[rows]
---order by sum([allocation_units].[total_pages]) * 8;
---order by [schemas].[name], [tables].[name];
-order  by [row_count] desc; 
+--ORDER  BY SUM([allocation_units].[total_pages]) * 8;
+ORDER  BY [schemas].[name]
+          , [tables].[name];
+--ORDER  BY [row_count] DESC; 
