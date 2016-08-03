@@ -3,7 +3,7 @@
 -------------------------------------------------
 DECLARE @tbl NVARCHAR(265);
 
-SELECT @tbl = 'Player';
+SELECT @tbl = '<table_name>';
 
 SELECT [o].[name]
        , [i].[index_id]
