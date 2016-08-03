@@ -17,7 +17,7 @@
 -------------------------------------------------
 DECLARE @tbl NVARCHAR(265);
 
-SELECT @tbl = 'Player';
+SELECT @tbl = '<table_name>';
 
 SELECT [o].[name]
        , [s].[stats_id]
