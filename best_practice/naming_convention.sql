@@ -12,7 +12,7 @@
 	--
 	--	description
 	---------------------------------------------
-		[verbose].[lower_case].[english_grammar].[bracketed].[separated_by_underscore].[consistent]
+		[verbose].[lower_case].[verb_object].[english_grammar].[bracketed].[separated_by_underscore].[consistent]
 
 		[verbose]					- Use of abbreviations is avoided except in cases where the abbreviation
 										is in common usage such as [id] in place of [identity], [us] in 
@@ -29,10 +29,12 @@
 										[DataBase]? Using all lower case allows you to run your code through 
 										through lower(@sql_code) prior to execution to ensure you do not
 										experience failures due to case sensitivity.
-		[english_grammar]			- Use of standard english grammar syntax simplifies the naming of objects.
-										You "get data" rather than "data get", and "generate extended
-										properties" rather than "extended properties generate". 
-		[bracketed]					- 
+		[verb_object]			- You "get data" rather than "data get", and "generate extended properties" rather than 
+										"extended properties generate".
+		[english_grammar]		- Use of standard english grammar syntax simplifies the naming of objects. Name objects the same as
+										you would say them in a sentence in writing or in conversation.
+		[bracketed]			- Rather than only occasionally use brackets as required for reusing system reserved words, with non-
+										standard characters such as ".", be consistent and use brackets throughout.
 		[separated_by_underscore]	- The underscore "_" is one of the few characters other than [a-zA-Z0-9]
 										that is acceptable in the naming of objects in virtually every
 										programming language. (Even then, as with numeric characters, it should
