@@ -30,7 +30,10 @@
 										through lower(@sql_code) prior to execution to ensure you do not
 										experience failures due to case sensitivity.
 		[verb_object]			- You "get data" rather than "data get", and "generate extended properties" rather than 
-										"extended properties generate".
+										"extended properties generate". Violate this rule when using objects that have a 
+										predefined name. For example, for a primary key on [sales_secure].[monthly_forecast], 
+										name the primary key [sales_secure.monthly_forecast.primary_key_clustered] as
+										"primary_key_clustered" is the system name for a primary key.
 		[english_grammar]		- Use of standard english grammar syntax simplifies the naming of objects. Name objects the same as
 										you would say them in a sentence in writing or in conversation.
 		[bracketed]			- Rather than only occasionally use brackets as required for reusing system reserved words, with non-
@@ -38,8 +41,13 @@
 		[separated_by_underscore]	- The underscore "_" is one of the few characters other than [a-zA-Z0-9]
 										that is acceptable in the naming of objects in virtually every
 										programming language. (Even then, as with numeric characters, it should
-										not be used as the first character in an object name).
-		[consistent]				- Use of common constructs simplifies the task of the developer. Knowing 
+										not be used as the first character in an object name). Violate this rule in 
+										cases such as creating index names and catenating [<schema>].[<object>] as 
+										the schema and object may already use underscores. For example, for a primary
+										key on [sales_secure].[monthly_forecast], name the primary key
+										[sales_secure.monthly_forecast.primary_key_clustered] to distinguish between this
+										and [sales.secure_monthly_forecast.primary_key_clustered].
+		[consistent]			- Use of common constructs simplifies the task of the developer. Knowing 
 										that there will (virtually) always be an [id] column on a table
 										that is the primary key of the table and an anchor for foreign key
 										references simplifies the developers job dramatically. Similarly,
