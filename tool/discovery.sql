@@ -1,9 +1,14 @@
+--
+-- find column used in modules
+-------------------------------------------------
 select object_schema_name([sql_modules].[object_id]) as [schema]
        , object_name([sql_modules].[object_id])      as [method]
        , [sql_modules].[definition]                  as [sql_text]
 from   [sys].[sql_modules] as [sql_modules]
 where  [sql_modules].[definition] like N'%<find_this_column>%';
-
+--
+-- get extended properties
+-------------------------------------------------
 select object_schema_name([columns].[object_id]) as [schema]
        , object_name([columns].[object_id])      as [object]
        , [columns].[name]                        as [column]
