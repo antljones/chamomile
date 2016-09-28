@@ -203,7 +203,7 @@ values      (N'white'),
 -- 
 -- Note that the records are deleted directly from the CTE rather than from the table! 
 with cte_deleteduplicates( [flower], rnumber)
-     as (select c[flower]
+     as (select [flower]
                 , row_number()
                     over (
                       partition by  [flower]
@@ -252,7 +252,7 @@ go
 with [get_latest]
      as (select [id]
                 , [flower]
-                , cast([color] as date)      as [[color]]
+                , cast([color] as date)      as [color]
                 , row_number()
                     over (
                       partition by [flower]
@@ -260,6 +260,6 @@ with [get_latest]
          from   ##flower)
 select [id]
        , [flower]
-       , [[color]]
+       , [color]
 from   [get_latest]
 where  [row_number] = 1; 
