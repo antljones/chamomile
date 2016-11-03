@@ -1,4 +1,4 @@
-USE [PlayerManagement] ;
+USE [<target_database>] ;
 GO
 DECLARE @Schema [sysname]= N'<schema>'
       , @Object [sysname] = N'<table>' ;
