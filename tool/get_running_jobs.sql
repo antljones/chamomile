@@ -1,4 +1,4 @@
-declare @header [sysname]=N'refresh.DWReporting.daily';
+declare @header [sysname]=N'<job_name>';
 
 select [sysjobactivity].[job_id]                 as [job_id]
        , [sysjobs].[name]                        as [job_name]
