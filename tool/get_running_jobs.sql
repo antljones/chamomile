@@ -1,28 +1,25 @@
-declare @header [sysname]=N'<job_name>';
+DECLARE @filter [SYSNAME]=NULL;
 
-select [sysjobactivity].[job_id]                 as [job_id]
-       , [sysjobs].[name]                        as [job_name]
-       , [sysjobactivity].[start_execution_date] as [start_execution_date]
-       , isnull(last_executed_step_id, 0) + 1    as [current_executed_step_id]
-       , [sysjobsteps].[step_name]               as [step_name]
-from   [msdb].[dbo].[sysjobactivity] as [sysjobactivity]
-       left join [msdb].[dbo].[sysjobhistory] as [sysjobhistory]
-              on [sysjobactivity].[job_history_id] = [sysjobhistory].[instance_id]
-       join [msdb].[dbo].[sysjobs] as [sysjobs]
-         on [sysjobactivity].[job_id] = [sysjobs].[job_id]
-       join [msdb].[dbo].[sysjobsteps] as [sysjobsteps]
-         on [sysjobactivity].[job_id] = [sysjobsteps].[job_id]
-            and isnull([sysjobactivity].[last_executed_step_id], 0)
+SELECT [sysjobactivity].[job_id]                 AS [job_id]
+       , [sysjobs].[name]                        AS [job_name]
+       , [sysjobactivity].[start_execution_date] AS [start_execution_date]
+       , isnull([last_executed_step_id], 0) + 1  AS [current_executed_step_id]
+       , [sysjobsteps].[step_name]               AS [step_name]
+FROM   [msdb].[dbo].[sysjobactivity] AS [sysjobactivity]
+       LEFT JOIN [msdb].[dbo].[sysjobhistory] AS [sysjobhistory]
+              ON [sysjobactivity].[job_history_id] = [sysjobhistory].[instance_id]
+       JOIN [msdb].[dbo].[sysjobs] AS [sysjobs]
+         ON [sysjobactivity].[job_id] = [sysjobs].[job_id]
+       JOIN [msdb].[dbo].[sysjobsteps] AS [sysjobsteps]
+         ON [sysjobactivity].[job_id] = [sysjobsteps].[job_id]
+            AND isnull([sysjobactivity].[last_executed_step_id], 0)
                 + 1 = [sysjobsteps].[step_id]
-where  [sysjobactivity].[session_id] = (select top (1) [session_id]
-                                        from   [msdb].[dbo].[syssessions]
-                                        order  by [agent_start_date] desc)
-       and [start_execution_date] is not null
-       and [stop_execution_date] is null
-       and [sysjobs].[name] like @header + N'%'
-       and [sysjobs].[name] != @header + N'.controller';
+WHERE  [sysjobactivity].[session_id] = (SELECT TOP (1) [session_id]
+                                        FROM   [msdb].[dbo].[syssessions]
+                                        ORDER  BY [agent_start_date] DESC)
+       AND [start_execution_date] IS NOT NULL
+       AND [stop_execution_date] IS NULL
+       AND ( [sysjobs].[name] LIKE N'%' + @filter + N'%'
+              OR @filter IS NULL );
 
-go
-
---execute msdb.dbo.sp_stop_job @job_name=N'refresh.DWReporting.daily.step_220.claimLineFt', @job_id=N'<job_id{uniqueidentifier}>',@originating_server=N'<originating_server{sysname}>', @server_name=N'<server_name{uniqueidentifier}>';
 go 
