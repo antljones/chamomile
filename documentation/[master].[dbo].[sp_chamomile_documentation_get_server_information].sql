@@ -74,7 +74,7 @@ as
                                                                                  + isnull(lower(cast(object_schema_name(@procedure_id) as [sysname])), N'default')
                                                                                  + N'.'
                                                                                  + isnull(lower(cast(object_name(@procedure_id) as [sysname])), N'default')
-                                                                                 , N'.')) as [source_table]
+                                                                                 , N'.', null, null)) as [source_table]
                                    pivot (max([node])
                                          for [index] in ([0],
                                                          [1],
