@@ -15,14 +15,40 @@ VALUES      (N'<log application="apples" timestamp="2016-11-21T14:11:12.123">Thi
 			 </log>'),
             (N'<value>This is a value item.</value>'),
             (N'<value>This is a value item too.</value>'),
-            (N'<log application="peaches" timestamp="2016-11-23T07:33:14.887">This is a log item as well.</log>'),
+            (N'<log application="peaches" timestamp="2016-11-23T07:33:14.887">This is a log item as well.
+				<data>
+				    <list>
+					   <item number="1" value="green" />
+					   <item number="4" value="mauve" />
+					   <item number="2" value="yellow" />
+				    </list>
+				</data>
+			 </log>'),
             (N'<value>This is a value item as well.</value>');
 
+--
+-- get only the log entries
+-------------------------------------------------
 SELECT [entry]
        , [entry].value(N'(./*/text())[1]', N'nvarchar(max)')              AS [value]
        , [entry].value(N'(./*/@application)[1]', N'sysname')              AS [application]
        , [entry].value(N'(./*/@timestamp)[1]', N'datetime')               AS [timestamp]
+       , [entry].query(N'(./*/data/*)[1]')                                AS [data]
        , [entry].value(N'(./*/special_note/text())[1]', N'nvarchar(max)') AS [special_note]
 FROM   @entry AS [entry]
        CROSS APPLY [entry].[nodes]('/*') AS [table] ( [column] )
-WHERE  CAST([table].[column].[query]('fn:local-name(.)') AS [SYSNAME]) = N'log'; 
+WHERE  CAST([table].[column].[query]('fn:local-name(.)') AS [SYSNAME]) = N'log';
+
+--
+-- get only the log entries having a data node in any position (//* syntax)
+-------------------------------------------------
+SELECT [entry]
+       , [entry].value(N'(./*/text())[1]', N'nvarchar(max)')              AS [value]
+       , [entry].value(N'(./*/@application)[1]', N'sysname')              AS [application]
+       , [entry].value(N'(./*/@timestamp)[1]', N'datetime')               AS [timestamp]
+       , [entry].query(N'(./*/data/*)[1]')                                AS [data]
+       , [entry].value(N'(./*/special_note/text())[1]', N'nvarchar(max)') AS [special_note]
+FROM   @entry AS [entry]
+       CROSS APPLY [entry].[nodes]('/*') AS [table] ( [column] )
+WHERE  CAST([table].[column].[query]('fn:local-name(.)') AS [SYSNAME]) = N'log'
+       AND [entry].exist('//*[local-name()="data"]') = 1; 
