@@ -1,3 +1,6 @@
+--
+-- shredding specific values out of a table
+-------------------------------------------------
 DECLARE @entry AS TABLE
   (
      [id]      int IDENTITY(1, 1)
@@ -6,15 +9,20 @@ DECLARE @entry AS TABLE
 
 INSERT INTO @entry
             ([entry])
-VALUES      (N'<log>This is a log item.</log>')
-		  , (N'<log>This is a log item too.</log>')
-		  , (N'<value>This is a value item.</value>')
-		  , (N'<value>This is a value item too.</value>')
-		  , (N'<log>This is a log item as well.</log>')
-		  , (N'<value>This is a value item as well.</value>');
+VALUES      (N'<log application="apples" timestamp="2016-11-21T14:11:12.123">This is a log item.</log>'),
+            (N'<log application="oranges" timestamp="2016-11-22T06:28:32.990">This is a log item too.
+			 <special_note>The quick brown fox jumps over the lazy dog.</special_note>
+			 </log>'),
+            (N'<value>This is a value item.</value>'),
+            (N'<value>This is a value item too.</value>'),
+            (N'<log application="peaches" timestamp="2016-11-23T07:33:14.887">This is a log item as well.</log>'),
+            (N'<value>This is a value item as well.</value>');
 
 SELECT [entry]
-       , [entry].value(N'(./*/text())[1]', N'nvarchar(max)') AS [value]
-FROM   @entry
+       , [entry].value(N'(./*/text())[1]', N'nvarchar(max)')              AS [value]
+       , [entry].value(N'(./*/@application)[1]', N'sysname')              AS [application]
+       , [entry].value(N'(./*/@timestamp)[1]', N'datetime')               AS [timestamp]
+       , [entry].value(N'(./*/special_note/text())[1]', N'nvarchar(max)') AS [special_note]
+FROM   @entry AS [entry]
        CROSS APPLY [entry].[nodes]('/*') AS [table] ( [column] )
-WHERE  CAST([table].[column].[query]('fn:local-name(.)') AS [SYSNAME]) = N'value'; 
+WHERE  CAST([table].[column].[query]('fn:local-name(.)') AS [SYSNAME]) = N'log'; 
