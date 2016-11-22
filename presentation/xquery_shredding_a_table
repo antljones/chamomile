@@ -1,0 +1,20 @@
+DECLARE @entry AS TABLE
+  (
+     [id]      int IDENTITY(1, 1)
+     , [entry] xml
+  );
+
+INSERT INTO @entry
+            ([entry])
+VALUES      (N'<log>This is a log item.</log>')
+		  , (N'<log>This is a log item too.</log>')
+		  , (N'<value>This is a value item.</value>')
+		  , (N'<value>This is a value item too.</value>')
+		  , (N'<log>This is a log item as well.</log>')
+		  , (N'<value>This is a value item as well.</value>');
+
+SELECT [entry]
+       , [entry].value(N'(./*/text())[1]', N'nvarchar(max)') AS [value]
+FROM   @entry
+       CROSS APPLY [entry].[nodes]('/*') AS [table] ( [column] )
+WHERE  CAST([table].[column].[query]('fn:local-name(.)') AS [SYSNAME]) = N'value'; 
