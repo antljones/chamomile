@@ -54,8 +54,6 @@ go
 					 [parameters].[parameter_id]=[extended_properties].[minor_id]
 	where  [schemas].[name]=@schema and [objects].[name]=@object
 	order  by [parameters].[parameter_id],[object],[type],[property]; 
-	
-	execute [job].[run] @prefix=N'refresh.DWReporting.daily', @first_sequence=9000;
 */
 create procedure [job].[run] @prefix           [sysname]
                              , @first_sequence [int] = 1
@@ -202,7 +200,7 @@ go
 
 exec sys.sp_addextendedproperty
   @name = N'revision_20150824',
-  @value = N'KELightsey@gmail.com – added process delay.',
+  @value = N'KELightsey@gmail.com â€“ added process delay.',
   @level0type = N'schema',
   @level0name = N'job',
   @level1type = N'procedure',
