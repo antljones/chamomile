@@ -47,7 +47,7 @@ as
                             , [dm_db_missing_index_columns].[column_name]                                                           as [column_name]
                             , [dm_db_missing_index_columns].[column_usage]                                                          as [column_usage]
                             --
-                            , cast([avg_total_user_cost] * [avg_user_impact] * ( [user_seeks] + [user_scans] ) as [decimal](10, 2)) as [cumulative_measure]
+                            , cast([avg_total_user_cost] * [avg_user_impact] * ( [user_seeks] + [user_scans] ) as [decimal](16, 2)) as [cumulative_measure]
                             --
                             , [dm_db_missing_index_group_stats].[avg_system_impact]                                                 as [avg_system_impact]
                             , [dm_db_missing_index_group_stats].[avg_total_system_cost]                                             as [avg_total_system_cost]
