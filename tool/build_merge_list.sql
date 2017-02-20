@@ -1,32 +1,59 @@
-/*
-
-*/
 --
 -- merge source list
 --------------------------------------------------------------------------
-declare @list [nvarchar](max);
+DECLARE @list [nvarchar](max);
 
-select @list = coalesce(@list, N', ', N'') + N'@'
+SELECT @list = COALESCE(@list, N', ', N'') + N'@'
                + [columns].[name] + N' as [' + [columns].[name]
                + N'], '
-from   [sys].[columns] as [columns]
-where  object_schema_name([columns].[object_id]) = N'letter_secure'
-       and object_name([columns].[object_id]) = N'interface'
-order  by [columns].[name];
+FROM   [sys].[columns] AS [columns]
+WHERE  object_schema_name([columns].[object_id]) = N'dbo'
+       AND object_name([columns].[object_id]) = N'Promotions'
+ORDER  BY [columns].[name];
 
-select @list;
+SELECT @list AS [source_list];
+
+go
 
 --
 -- merge update list
 --------------------------------------------------------------------------
-declare @list [nvarchar](max);
+DECLARE @list [nvarchar](max);
 
-select @list = coalesce(@list, N', ', N'') + N'['
+SELECT @list = COALESCE(@list, N', ', N'') + N'['
                + [columns].[name] + N'] = source.['
                + [columns].[name] + N'], '
-from   [sys].[columns] as [columns]
-where  object_schema_name([columns].[object_id]) = N'letter_secure'
-       and object_name([columns].[object_id]) = N'interface'
-order  by [columns].[name];
+FROM   [sys].[columns] AS [columns]
+WHERE  object_schema_name([columns].[object_id]) = N'dbo'
+       AND object_name([columns].[object_id]) = N'Promotions'
+ORDER  BY [columns].[name];
 
-select @list; 
+SELECT @list AS [update_list];
+
+GO
+
+--
+-- merge VALUES list
+--------------------------------------------------------------------------
+DECLARE @list1   [nvarchar](max)
+        , @list2 nvarchar(max);
+
+SELECT @list1 = COALESCE(@list1 + N', ', N'') + N'@'
+                + [columns].[name]
+FROM   [sys].[columns] AS [columns]
+WHERE  object_schema_name([columns].[object_id]) = N'dbo'
+       AND object_name([columns].[object_id]) = N'Promotions'
+ORDER  BY [columns].[name];
+
+--
+SELECT @list2 = COALESCE(@list2 + N', ', N'') + N'['
+                + [columns].[name] + N']'
+FROM   [sys].[columns] AS [columns]
+WHERE  object_schema_name([columns].[object_id]) = N'dbo'
+       AND object_name([columns].[object_id]) = N'Promotions'
+ORDER  BY [columns].[name];
+
+SELECT N'USING (VALUES (' + @list1 + N') AS SOURCE('
+       + @list2 + N')' AS [values_list];
+
+go 
