@@ -77,3 +77,17 @@ FROM   [sys].[dm_exec_query_stats] AS [dm_exec_query_stats]
        LEFT JOIN [sys].[databases] AS [databases]
               ON [databases].[database_id] = [dm_exec_sql_text].[dbid]
 ORDER  BY [dm_exec_query_stats].[execution_count] DESC; 
+
+--
+-- distribution of queries
+-------------------------------------------------
+SELECT cast(cume_dist()
+              OVER (
+                ORDER BY [total_elapsed_time])AS decimal (5, 2))   AS [cumulative_distribution]
+       , cast(percent_rank()
+                OVER (
+                  ORDER BY [total_elapsed_time])AS decimal (5, 2)) AS [percent_rank]
+       , *
+FROM   [sys].[dm_exec_query_stats]
+       CROSS apply [sys].[dm_exec_sql_text]([sql_handle]) AS [sql_text]
+ORDER  BY [cumulative_distribution] DESC 
