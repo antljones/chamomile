@@ -28,8 +28,30 @@
 	--
 	-- references
 	---------------------------------------------
-	http://www.mssqltips.com/sqlservertip/1197/service-broker-troubleshooting/
-	http://www.sqlteam.com/article/how-to-troubleshoot-service-broker-problems
+	Service Broker Troubleshooting - http://www.mssqltips.com/sqlservertip/1197/service-broker-troubleshooting/
+	How to troubleshoot Service Broker problems - http://www.sqlteam.com/article/how-to-troubleshoot-service-broker-problems
+
+*/
+/*
+	ALTER DATABASE [db_name]
+
+	SET SINGLE_USER WITH
+
+	ROLLBACK IMMEDIATE;
+
+	go
+
+	ALTER DATABASE [db_name]
+
+	SET ENABLE_BROKER;
+
+	go
+
+	ALTER DATABASE [db_name]
+
+	SET MULTI_USER;
+
+	go 
 
 */
 -- ssbdiagnose -E -d chamomile -S MCK790L8159\INSTANCE_2014_01 CONFIGURATION FROM SERVICE //chamomile.katherinelightsey.com/command_stack/initiator_service TO SERVICE //chamomile.katherinelightsey.com/command_stack/target_service;
@@ -37,20 +59,13 @@
 -- ssbdiagnose CONFIGURATION FROM SERVICE //InstDB/2InstSample/InitiatorService -S MCK790L8159\CHAMOMILE_OLTP -d InstInitiatorDB TO SERVICE //TgtDB/2InstSample/TargetService -S MCK790L8159\CHAMOMILE -d InstTargetDB ON CONTRACT //BothDB/2InstSample/SimpleContract
 -- ssbdiagnose runtime connect to -S MCK790L8159\CHAMOMILE_OLTP connect to -S MCK790L8159\CHAMOMILE
 --------------------------------------------------------------------------
-select *
-from   sys.service_message_types;
-
--- Contracts
-select *
-from   sys.service_contracts;
-
--- Services
-select *
-from   sys.services;
-
--- Endpoints
-select *
-from   sys.endpoints;
+SELECT * FROM [sys].[service_message_types];
+SELECT * FROM [sys].[service_contracts];
+SELECT * FROM [sys].[services];
+SELECT * FROM [sys].[endpoints];
+SELECT * FROM [sys].[service_broker_endpoints];
+SELECT * FROM [sys].[routes];
+SELECT * FROM [sys].[conversation_endpoints];
 
 /*
 	Troubleshooting the Service Broker Queues - Once you start adding messages to your queues 
@@ -61,17 +76,17 @@ from   sys.endpoints;
 	http://www.mssqltips.com/sqlservertip/1197/service-broker-troubleshooting/
 */
 --------------------------------------------------------------------------
-select conversation_handle
-       , is_initiator
-       , s.name  as 'local service'
-       , far_service
-       , sc.name 'contract'
-       , state_desc
-from   sys.conversation_endpoints ce
-       left join sys.services s
-              on ce.service_id = s.service_id
-       left join sys.service_contracts sc
-              on ce.service_contract_id = sc.service_contract_id;
+SELECT [conversation_handle]
+       , [is_initiator]
+       , [s].[Name]  AS 'local service'
+       , [far_service]
+       , [sc].[Name] AS 'contract'
+       , [state_desc]
+FROM   [sys].[conversation_endpoints] [ce]
+       LEFT JOIN [sys].[services] [s]
+              ON [ce].[service_id] = [s].[service_id]
+       LEFT JOIN [sys].[service_contracts] [sc]
+              ON [ce].[service_contract_id] = [sc].[service_contract_id];
 
 /*
 	Another key queue to keep in mind when troubleshooting Service Broker is the sys.transmission_queue.  
@@ -84,8 +99,8 @@ from   sys.conversation_endpoints ce
 --------------------------------------------------------------------------
 -- Error messages in the queue
 -- An error occurred while receiving data: '10054(An existing connection was forcibly closed by the remote host.)'.
-select *
-from   sys.transmission_queue;
+SELECT *
+FROM   [sys].[transmission_queue];
 
 /*
 	Removing all records from the sys.transmission_queue - Odds are that if your Service Broker infrastructure 
@@ -117,35 +132,53 @@ Message The Service Broker protocol transport is disabled or not configured
 --
 -- returns a row for each Service Broker network connection.
 --------------------------------------------------------------------------
-select *
-from   sys.dm_broker_connections;
+SELECT * FROM [sys].[dm_broker_connections];
+
+--
+-- Returns a row for each queue monitor in the instance. A queue monitor manages activation for a queue.
+-- https://docs.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-broker-queue-monitors-transact-sql
+-------------------------------------------------
+select * 
+from [sys].[dm_broker_queue_monitors] as [dm_broker_queue_monitors];
 
 --
 -- returns a row for each Service Broker message that an instance of SQL Server is in the process of forwarding.
 --------------------------------------------------------------------------
-select *
-from   sys.dm_broker_forwarded_messages
+SELECT * FROM [sys].[dm_broker_forwarded_messages]
 
 --
 -- http://technet.microsoft.com/en-us/library/ms166044(v=sql.105).aspx
 --------------------------------------------------------------------------
-select is_broker_enabled
-from   sys.databases
-where  database_id = db_id();
+SELECT [is_broker_enabled]
+       , *
+FROM   sys.[databases]
+WHERE  [database_id] = db_id();
 
 --
 -- Contains a row for each object in the database that is a service queue, with sys.objects.type = SQ
 -- http://technet.microsoft.com/en-us/library/ms166102(v=sql.105).aspx
 --------------------------------------------------------------------------
-select *
-from   [sys].[service_queues];
+SELECT * FROM   [sys].[service_queues];
+select * from [sys].[service_queue_usages];
+SELECT * FROM [sys].[services];
+
+--
+SELECT [services].[name]                         AS [service]
+       , [service_queues].[name]                 AS [service_queue]
+       , [service_queues].[activation_procedure] AS [activation_procedure]
+FROM   [sys].[service_queues] AS [service_queues]
+       LEFT JOIN [sys].[service_queue_usages] AS [service_queue_usages]
+              ON [service_queue_usages].[service_queue_id] = [service_queues].[object_id]
+       LEFT JOIN [sys].[services] AS [services]
+              ON [services].[service_id] = [service_queue_usages].[service_id]; 
 
 --
 -- returns a row for each stored procedure activated by Service Broker. It can be joined to dm_exec_sessions.session_id via the spid column.
 -- http://technet.microsoft.com/en-us/library/ms175029(v=sql.105).aspx
 --------------------------------------------------------------------------
-select *
-from   sys.dm_broker_activated_tasks
+SELECT *
+FROM   [sys].[dm_broker_activated_tasks]
+
 
 --
 -- Make sure that activation stored procedures are correctly started.
@@ -153,52 +186,53 @@ from   sys.dm_broker_activated_tasks
 -- http://technet.microsoft.com/en-us/library/ms166102(v=sql.105).aspx
 -- ALTER QUEUE [target_queue] WITH STATUS = ON
 --------------------------------------------------------------------------
-select *
-from   [sys].[dm_broker_queue_monitors];
+SELECT *
+FROM   [sys].[dm_broker_queue_monitors];
 
-select [databases].[name]                                 as [database]
-       , [service_queues].[name]                          as [queue]
-       , [service_queues].[activation_procedure]          as [activation_procedure]
-       , [service_queues].[is_activation_enabled]         as [is_activation_enabled]
-       , [dm_broker_queue_monitors].[state]               as [state]
-       , [dm_broker_queue_monitors].[tasks_waiting]       as [tasks_waiting]
-       , [dm_broker_queue_monitors].[last_activated_time] as [last_activated_time]
+SELECT [databases].[name]                                 AS [database]
+       , [service_queues].[name]                          AS [queue]
+       , [service_queues].[activation_procedure]          AS [activation_procedure]
+       , [service_queues].[is_activation_enabled]         AS [is_activation_enabled]
+       , [dm_broker_queue_monitors].[state]               AS [state]
+       , [dm_broker_queue_monitors].[tasks_waiting]       AS [tasks_waiting]
+       , [dm_broker_queue_monitors].[last_activated_time] AS [last_activated_time]
        , *
-from   [sys].[dm_broker_queue_monitors] as [dm_broker_queue_monitors]
-       join [sys].[service_queues] as [service_queues]
-         on [service_queues].[object_id] = [dm_broker_queue_monitors].[queue_id]
-       join [sys].[databases] as [databases]
-         on [databases].[database_id] = [dm_broker_queue_monitors].[database_id];
+FROM   [sys].[dm_broker_queue_monitors] AS [dm_broker_queue_monitors]
+       LEFT JOIN [sys].[service_queues] AS [service_queues]
+         ON [service_queues].[object_id] = [dm_broker_queue_monitors].[queue_id]
+       LEFT JOIN [sys].[databases] AS [databases]
+         ON [databases].[database_id] = [dm_broker_queue_monitors].[database_id];
 
-select t1.name                                       as [service_name]
-       , t3.name                                     as [schema_name]
-       , t2.name                                     as [queue_name]
-       , case
-           when t4.state is null then 'Not available'
-           else t4.state
-         end                                         as [queue_state]
-       , case
-           when t4.tasks_waiting is null then '--'
-           else convert(varchar, t4.tasks_waiting)
-         end                                         as tasks_waiting
-       , case
-           when t4.last_activated_time is null then '--'
-           else convert(varchar, t4.last_activated_time)
-         end                                         as last_activated_time
-       , case
-           when t4.last_empty_rowset_time is null then '--'
-           else convert(varchar, t4.last_empty_rowset_time)
-         end                                         as last_empty_rowset_time
-       , (select count(*)
-          from   sys.transmission_queue t6
-          where  ( t6.from_service_name = t1.name )) as [tran_message_count]
-from   sys.services t1
-       inner join sys.service_queues t2
-               on ( t1.service_queue_id = t2.object_id )
-       inner join sys.schemas t3
-               on ( t2.schema_id = t3.schema_id )
-       left outer join sys.dm_broker_queue_monitors t4
-                    on ( t2.object_id = t4.queue_id
-                         and t4.database_id = db_id() )
-       inner join sys.databases t5
-               on ( t5.database_id = db_id() ) 
+--
+SELECT [t1].NAME                                           AS [service_name]
+       , [t3].NAME                                         AS [schema_name]
+       , [t2].NAME                                         AS [queue_name]
+       , CASE
+           WHEN [t4].[state] IS NULL THEN 'Not available'
+           ELSE [t4].[state]
+         END                                               AS [queue_state]
+       , CASE
+           WHEN [t4].[tasks_waiting] IS NULL THEN '--'
+           ELSE CONVERT(varchar, [t4].[tasks_waiting])
+         END                                               AS [tasks_waiting]
+       , CASE
+           WHEN [t4].[last_activated_time] IS NULL THEN '--'
+           ELSE CONVERT(varchar, [t4].[last_activated_time])
+         END                                               AS [last_activated_time]
+       , CASE
+           WHEN [t4].[last_empty_rowset_time] IS NULL THEN '--'
+           ELSE CONVERT(varchar, [t4].[last_empty_rowset_time])
+         END                                               AS [last_empty_rowset_time]
+       , (SELECT count(*)
+          FROM   sys.[transmission_queue] [t6]
+          WHERE  ( [t6].[from_service_name] = [t1].NAME )) AS [tran_message_count]
+FROM   sys.[services] [t1]
+       INNER JOIN sys.[service_queues] [t2]
+               ON ( [t1].[service_queue_id] = [t2].[object_id] )
+       INNER JOIN sys.[schemas] [t3]
+               ON ( [t2].[schema_id] = [t3].[schema_id] )
+       LEFT OUTER JOIN sys.[dm_broker_queue_monitors] [t4]
+                    ON ( [t2].[object_id] = [t4].[queue_id]
+                         AND [t4].[database_id] = db_id() )
+       INNER JOIN sys.[databases] [t5]
+               ON ( [t5].[database_id] = db_id() ) 
