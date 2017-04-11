@@ -1,18 +1,19 @@
 --
 -------------------------------------------------
-SELECT quotename(object_schema_name([dm_exec_query_plan].[objectid]))
-       + N'.'
-       + quotename(object_name([dm_exec_query_plan].[objectid]))                                             AS [object]
+SELECT quotename([schemas].[name]) + N'.'
+       + quotename([objects].[name])                                                                         AS [object]
        , avg([dm_exec_query_stats].[total_worker_time] / [dm_exec_query_stats].[execution_count]) / 1000000  AS [average_cpu_time_seconds]
        , avg([dm_exec_query_stats].[total_elapsed_time] / [dm_exec_query_stats].[execution_count]) / 1000000 AS [average_run_time_seconds]
 FROM   [sys].[dm_exec_query_stats] AS [dm_exec_query_stats]
        CROSS apply [sys].[dm_exec_sql_text]([dm_exec_query_stats].[plan_handle]) AS [dm_exec_sql_txt]
        CROSS apply [sys].[dm_exec_query_plan]([dm_exec_query_stats].[plan_handle]) AS [dm_exec_query_plan]
-WHERE  DB_NAME([dm_exec_sql_txt].[dbid]) = N'PlayerDataPurge'
-GROUP  BY quotename(object_schema_name([dm_exec_query_plan].[objectid]))
-          + N'.'
-          + quotename(object_name([dm_exec_query_plan].[objectid]))
-ORDER  BY [average_cpu_time_seconds] DESC;
+       LEFT JOIN [sys].[objects] AS [objects]
+              ON [objects].[object_id] = [dm_exec_query_plan].[objectid]
+       LEFT JOIN [sys].[schemas] AS [schemas]
+              ON [schemas].[schema_id] = [objects].[schema_id]
+GROUP  BY quotename([schemas].[name]) + N'.'
+          + quotename([objects].[name])
+ORDER  BY [average_cpu_time_seconds] DESC; 
 
 --
 -- http://www.codeproject.com/Articles/579593/How-to-Find-the-Top-Most-Expens
@@ -28,7 +29,6 @@ SELECT TOP 10 [dm_exec_sql_text].[text]                                         
 FROM   [sys].[dm_exec_query_stats] AS [dm_exec_query_stats]
        CROSS APPLY SYS.[dm_exec_sql_text] ([dm_exec_query_stats].[sql_handle]) AS [dm_exec_sql_text]
        CROSS APPLY SYS.[dm_exec_query_plan] ([dm_exec_query_stats].[plan_handle]) AS [dm_exec_query_plan]
-WHERE  DB_NAME ([dm_exec_sql_text].[dbid]) = N'PlayerDataPurge'
 ORDER  BY [dm_exec_query_stats].[total_worker_time] DESC;
 
 --
@@ -46,7 +46,6 @@ FROM   [sys].[dm_exec_query_stats] AS [dm_exec_query_stats]
        CROSS APPLY [sys].[dm_exec_sql_text]([dm_exec_query_stats].[sql_handle]) AS [dm_exec_sql_text]
 WHERE  [dm_exec_query_stats].[total_logical_reads]
        + [dm_exec_query_stats].[total_logical_writes] > 0
-       AND DB_NAME ([dm_exec_sql_text].[dbid]) = N'PlayerDataPurge'
 ORDER  BY [total_io] DESC;
 
 --
