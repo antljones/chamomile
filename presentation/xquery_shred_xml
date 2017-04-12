@@ -1,0 +1,4 @@
+SELECT C.value('(<column_a>)[1]', 'nvarchar(max)') AS [column_a]
+       , C.value('(<column_b>)[1]', 'datetimeoffset') AS [column_b]
+FROM   @entry.nodes('/list/item') AS [T](C)
+ORDER  BY C.value('(column_b)[1]', 'datetimeoffset') ASC;
