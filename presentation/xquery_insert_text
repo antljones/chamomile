@@ -1,0 +1,2 @@
+
+                SET @error.modify(N'insert text{sql:variable("@message")} as first into (/*/application_message)[1]');
