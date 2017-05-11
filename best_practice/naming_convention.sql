@@ -12,7 +12,7 @@
 	--
 	--	description
 	---------------------------------------------
-		[verbose].[lower_case].[verb_object].[english_grammar].[bracketed].[separated_by_underscore].[consistent]
+		[verbose].[lower_case].[verb_object].[english_grammar].[bracketed].[separated_by_underscore].[consistent].[singular]
 
 		[verbose]					- Use of abbreviations is avoided except in cases where the abbreviation
 										is in common usage such as [id] in place of [identity], [us] in 
@@ -55,6 +55,12 @@
 										for business data in the specified schema, and [<schema>].[set_data]
 										and [<schema>].[get_data] as the primary mutator and accessor 
 										simplifies the job of the developer. 
+		[singular]			- To maintain consistency, I use singular names for all objects. For example, [address] rather than [addresses]. 
+										This makes sense for tables because a table could have only one entry.
+										In the case of an XML construct or other such construct where you have a 
+										high level node which aggregates sub-nodes, I use the nomenclature of "_list".
+										For example, a name of "address_list" clearly specifies that the construct
+										is expected to contain multiple "address" objects.
 
 										[address].[data].[id] fully specifies the primary key of the primary
 										data repository for addresses. [person].[data].[id] fully specifies
