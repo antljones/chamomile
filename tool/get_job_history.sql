@@ -4,6 +4,24 @@ exec dbo.sp_help_jobsteplog
 
 go
 
+select j.name                                        as 'JobName'
+       , run_date
+       , run_time
+       , run_duration
+       , run_duration / 10000                        Hours
+       , --hours
+       run_duration / 100%100                        Minutes
+       , --minutes
+       run_duration%100                              Seconds --seconds
+       , msdb.dbo.agent_datetime(run_date, run_time) as 'RunDateTime'
+From   msdb.dbo.sysjobhistory h
+       join msdb.dbo.sysjobs j
+         ON j.job_id = h.job_id
+--where  j.enabled = 1 --Only Enabled Jobs
+where  j.name = N'expire.session'
+order  by JobName
+          , RunDateTime asc; 
+
 declare @job   [sysname] = N'refresh.DWReporting.daily',
         @begin [datetime] = N'20150901',
         @end   [datetime] = null;
