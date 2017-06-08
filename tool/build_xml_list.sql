@@ -1,3 +1,10 @@
+SELECT N', cast(isnull(' + [name] + N', N'''') AS SYSNAME) AS N''' + [name] + N''''
+FROM   [sys].[parameters] AS [parameters]
+WHERE  object_schema_name([object_id]) = N'dbo'
+       AND object_name([object_id]) = N'FloorEvent_Submit'
+ORDER  BY [name];
+
+
 --
 --
 -- todo - build from remote database, call view remotely?
