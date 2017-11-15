@@ -8,7 +8,7 @@ SELECT quotename(object_schema_name([dm_exec_query_plan].[objectid]))
 FROM   [sys].[dm_exec_query_stats] AS [dm_exec_query_stats]
        CROSS apply [sys].[dm_exec_sql_text]([dm_exec_query_stats].[plan_handle]) AS [dm_exec_sql_txt]
        CROSS apply [sys].[dm_exec_query_plan]([dm_exec_query_stats].[plan_handle]) AS [dm_exec_query_plan]
-WHERE  DB_NAME([dm_exec_sql_txt].[dbid]) = N'PlayerDataPurge'
+WHERE  DB_NAME([dm_exec_sql_txt].[dbid]) = @database
 GROUP  BY quotename(object_schema_name([dm_exec_query_plan].[objectid]))
           + N'.'
           + quotename(object_name([dm_exec_query_plan].[objectid]))
@@ -28,7 +28,7 @@ SELECT TOP 10 [dm_exec_sql_text].[text]                                         
 FROM   [sys].[dm_exec_query_stats] AS [dm_exec_query_stats]
        CROSS APPLY SYS.[dm_exec_sql_text] ([dm_exec_query_stats].[sql_handle]) AS [dm_exec_sql_text]
        CROSS APPLY SYS.[dm_exec_query_plan] ([dm_exec_query_stats].[plan_handle]) AS [dm_exec_query_plan]
-WHERE  DB_NAME ([dm_exec_sql_text].[dbid]) = N'PlayerDataPurge'
+WHERE  DB_NAME ([dm_exec_sql_text].[dbid]) = @database
 ORDER  BY [dm_exec_query_stats].[total_worker_time] DESC;
 
 --
@@ -46,7 +46,7 @@ FROM   [sys].[dm_exec_query_stats] AS [dm_exec_query_stats]
        CROSS APPLY [sys].[dm_exec_sql_text]([dm_exec_query_stats].[sql_handle]) AS [dm_exec_sql_text]
 WHERE  [dm_exec_query_stats].[total_logical_reads]
        + [dm_exec_query_stats].[total_logical_writes] > 0
-       AND DB_NAME ([dm_exec_sql_text].[dbid]) = N'PlayerDataPurge'
+       AND DB_NAME ([dm_exec_sql_text].[dbid]) = @database
 ORDER  BY [total_io] DESC;
 
 --
@@ -60,5 +60,5 @@ SELECT [dm_exec_query_stats].[execution_count] AS [execution_count]
        , [dm_exec_query_stats].*
 FROM   [sys].[dm_exec_query_stats] AS [dm_exec_query_stats]
        CROSS APPLY [sys].[dm_exec_sql_text]([dm_exec_query_stats].[sql_handle]) AS [dm_exec_sql_text]
-WHERE  DB_NAME ([dm_exec_sql_text].[dbid]) = N'PlayerDataPurge'
+WHERE  DB_NAME ([dm_exec_sql_text].[dbid]) = @database
 ORDER  BY [dm_exec_query_stats].[execution_count] DESC; 
