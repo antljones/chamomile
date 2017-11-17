@@ -19,7 +19,7 @@ FROM   [sys].[dm_db_index_physical_stats](db_id(), NULL, NULL, NULL, 'LIMITED') 
          ON [tables].[object_id] = [dm_db_index_physical_stats].[object_id]
        JOIN [sys].[schemas] AS [schemas]
          ON [schemas].[schema_id] = [tables].[schema_id]
-WHERE  [dm_db_index_physical_stats].[avg_fragmentation_in_percent] * 100 > @maximum_fragmentation
+WHERE  [dm_db_index_physical_stats].[avg_fragmentation_in_percent] > @maximum_fragmentation
        AND ( ( object_name([indexes].[object_id]) LIKE N'%' + @table_filter + N'%' )
               OR ( @table_filter IS NULL ) )
 ORDER  BY [dm_db_index_physical_stats].[avg_fragmentation_in_percent] DESC
