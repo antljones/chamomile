@@ -1,3 +1,6 @@
+--
+-- RE: https://docs.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-db-stats-properties-transact-sql
+------------------------------------------------------------
 SELECT quotename(db_name()) + N'.'
        + quotename([schemas].[name]) + N'.'
        + quotename([objects].[name])                     AS [object]
@@ -18,6 +21,7 @@ ORDER BY [dm_db_stats_properties].[last_updated] ASC;
 
 --
 -- http://www.sommarskog.se/query-plan-mysteries.html#statinfo
+------------------------------------------------------------
 /*
 	If you believe statistics are out of date, you can use this command:
 
