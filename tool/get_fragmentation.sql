@@ -1,5 +1,5 @@
 --
---
+-- Gets the fragmentation for the current database using LIMITED sampling
 -- RE: https://docs.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-db-index-physical-stats-transact-sql
 -------------------------------------------------
 DECLARE @table_filter            SYSNAME = NULL
