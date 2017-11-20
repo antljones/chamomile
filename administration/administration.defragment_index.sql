@@ -8,7 +8,6 @@ go
 
 IF object_id(N'[administration].[defragment_index]', N'P') IS NOT NULL
   DROP PROCEDURE [administration].[defragment_index]; ;
-;
 go
 
 /*
@@ -46,29 +45,26 @@ go
 	order  by [parameters].[parameter_id],[object],[type],[property]; 
 	
 	-- execute_as
-	DECLARE @maximum_fragmentation    [INT] = 85
+	DECLARE @maximum_fragmentation    [INT] = 25
+			, @minimum_page_count     [INT] = 500
 			, @fillfactor             [INT] = NULL
 			, @reorganize_demarcation [INT] = 25
-			, @table_filter           [SYSNAME] = NULL
 			, @defrag_count_limit     [INT] = 2
 			, @output                 [XML];
-
 	EXECUTE [administration].[defragment_index]
 		@maximum_fragmentation=@maximum_fragmentation
+		, @minimum_page_count=@minimum_page_count
 		, @fillfactor=@fillfactor
 		, @reorganize_demarcation=@reorganize_demarcation
-		, @table_filter=@table_filter
 		, @defrag_count_limit=@defrag_count_limit
 		, @output=@output OUTPUT;
 	SELECT @output as [output];
-
-
 	
 */
 CREATE PROCEDURE [administration].[defragment_index] @maximum_fragmentation    [INT] = 25
+                                                     , @minimum_page_count     [INT] = 500
                                                      , @fillfactor             [INT] = NULL
                                                      , @reorganize_demarcation [INT] = 25
-                                                     , @table_filter           [SYSNAME] = NULL
                                                      , @defrag_count_limit     [INT] = NULL
                                                      , @output                 [XML] = NULL OUT
 AS
@@ -96,6 +92,13 @@ AS
                                          + '" timestamp="'
                                          + CONVERT(SYSNAME, @timestamp, 126) + '"/>')
              , @defrag_count_limit = COALESCE(@defrag_count_limit, 1);
+      --
+      -------------------------------------------
+	  set @output.modify(N'insert attribute maximum_fragmentation {sql:variable("@maximum_fragmentation")} as last into (/*)[1]');
+	  set @output.modify(N'insert attribute minimum_page_count {sql:variable("@minimum_page_count")} as last into (/*)[1]');
+	  set @output.modify(N'insert attribute fillfactor {sql:variable("@fillfactor")} as last into (/*)[1]');
+	  set @output.modify(N'insert attribute reorganize_demarcation {sql:variable("@reorganize_demarcation")} as last into (/*)[1]');
+	  set @output.modify(N'insert attribute defrag_count_limit {sql:variable("@defrag_count_limit")} as last into (/*)[1]');
 
       --
       -------------------------------------------
@@ -114,8 +117,7 @@ AS
                  ON [schemas].[schema_id] = [tables].[schema_id]
         WHERE  [indexes].[name] IS NOT NULL
                AND [dm_db_index_physical_stats].[avg_fragmentation_in_percent] > @maximum_fragmentation
-               AND ( ( object_name([indexes].[object_id]) LIKE N'%' + @table_filter + N'%' )
-                      OR ( @table_filter IS NULL ) )
+			   AND [dm_db_index_physical_stats].[page_count] > @minimum_page_count
         ORDER  BY [dm_db_index_physical_stats].[avg_fragmentation_in_percent] DESC
                   , [schemas].[name]
                   , [tables].[name];
@@ -241,16 +243,6 @@ IF EXISTS (SELECT *
 
 go
 
-EXEC sys.sp_addextendedproperty
-  @name = N'revision_20160106'
-  , @value = N'KELightsey@gmail.com – Added @table_filter parameter to allow defragging for only a specified table (using LIKE constraint).'
-  , @level0type = N'schema'
-  , @level0name = N'administration'
-  , @level1type = N'procedure'
-  , @level1name = N'defragment_index';
-
-go
-
 --
 ------------------------------------------------- 
 IF EXISTS (SELECT *
@@ -313,19 +305,15 @@ go
 EXEC sys.sp_addextendedproperty
   @name = N'execute_as'
   , @value = N'execute [administration].[defragment_index];  
-
 	DECLARE @maximum_fragmentation    [INT] = 85
 			, @fillfactor             [INT] = NULL
 			, @reorganize_demarcation [INT] = 25
-			, @table_filter           [SYSNAME] = NULL
 			, @defrag_count_limit     [INT] = 2
 			, @output                 [XML];
-
 	EXECUTE [administration].[defragment_index]
 		@maximum_fragmentation=@maximum_fragmentation
 		, @fillfactor=@fillfactor
 		, @reorganize_demarcation=@reorganize_demarcation
-		, @table_filter=@table_filter
 		, @defrag_count_limit=@defrag_count_limit
 		, @output=@output OUTPUT;
 	SELECT @output as [output];
@@ -340,7 +328,7 @@ go
 --
 ------------------------------------------------- 
 IF EXISTS (SELECT *
-           FROM   fn_listextendedproperty(N'description', N'schema', N'administration', N'procedure', N'defragment_index', N'parameter', N'@table_filter'))
+           FROM   fn_listextendedproperty(N'description', N'schema', N'administration', N'procedure', N'defragment_index', N'parameter', N'@minimum_page_count'))
   EXEC sys.sp_dropextendedproperty
     @name = N'description'
     , @level0type = N'schema'
@@ -348,19 +336,19 @@ IF EXISTS (SELECT *
     , @level1type = N'procedure'
     , @level1name = N'defragment_index'
     , @level2type = N'parameter'
-    , @level2name = N'@table_filter';
+    , @level2name = N'@minimum_page_count';
 
 go
 
 EXEC sys.sp_addextendedproperty
   @name = N'description'
-  , @value = N'@table [sysname] NOT NULL - optional parameter, if used, constrains the defrag to tables matching on LIKE syntax. DEFAULT - NULL - all tables.'
+  , @value = N'@minimum_page_count [INT] = 500 - Tables with page count less than this will not be defragmented. Default 500.'
   , @level0type = N'schema'
   , @level0name = N'administration'
   , @level1type = N'procedure'
   , @level1name = N'defragment_index'
   , @level2type = N'parameter'
-  , @level2name = N'@table_filter';
+  , @level2name = N'@minimum_page_count';
 
 go
 
