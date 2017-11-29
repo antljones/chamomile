@@ -1,35 +1,31 @@
-/*
-	All content is licensed as [chamomile] (http://www.katherinelightsey.com/#!license/cjlz) and 
-		copyright Katherine Elizabeth Lightsey, 1959-2014 (aka; my life), all rights reserved,
-		and as open source under the GNU Affero GPL (http://www.gnu.org/licenses/agpl-3.0.html).
-	---------------------------------------------
+--
+-- http://www.sqlmatters.com/Articles/See%20what%20queries%20are%20currently%20running.aspx
+-------------------------------------------------------
+SELECT [dm_exec_requests].[start_time]             AS [start_time]
+       , [dm_exec_requests].[session_id]           AS [spid]
+       , DB_NAME([dm_exec_requests].[database_id]) AS [database]
+       , SUBSTRING([dm_exec_sql_text].[text], ( [dm_exec_requests].[statement_start_offset] / 2 ) + 1,
+         --
+         CASE
+             WHEN [dm_exec_requests].[statement_end_offset] = -1
+                   OR [dm_exec_requests].[statement_end_offset] = 0 THEN
+                 ( DATALENGTH([dm_exec_sql_text].[text]) - [dm_exec_requests].[statement_start_offset] / 2 ) + 1
+             ELSE
+                 ( [dm_exec_requests].[statement_end_offset] - [dm_exec_requests].[statement_start_offset] ) / 2 + 1
+         END)                                      AS [executing_sql]
+       , [dm_exec_requests].[status]               AS [status]
+       , [dm_exec_requests].[command]              AS [command]
+       , [dm_exec_requests].[wait_type]            AS [wait_type]
+       , [dm_exec_requests].[wait_time]            AS [wait_time]
+       , [dm_exec_requests].[wait_resource]        AS [wait_resource]
+       , [dm_exec_requests].[last_wait_type]       AS [last_wait_type]
+FROM   [sys].[dm_exec_requests] AS [dm_exec_requests]
+       OUTER APPLY [sys].[dm_exec_sql_text]([sql_handle]) AS [dm_exec_sql_text]
+WHERE  [dm_exec_requests].[session_id] != @@SPID -- don't show this query
+       AND [dm_exec_requests].[session_id] > 50 -- don't show system queries
+ORDER  BY [dm_exec_requests].[start_time]; 
 
-	--
-	--	description
-	---------------------------------------------
-		List all running processes within the database along with the sql text.
 
-
-
-	--
-	--	notes
-	---------------------------------------------
-		this presentation is designed to be run incrementally a code block at a time. 
-		code blocks are delineated as:
-
-		--
-		-- code block begin
-		-----------------------------------------
-			<run code here>
-		-----------------------------------------
-		-- code block end
-		--
-	
-	--
-	-- references
-	---------------------------------------------
-
-*/
 select session_id
        , status
        , blocking_session_id
