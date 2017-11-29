@@ -1,5 +1,6 @@
 --
 -- http://www.sqlmatters.com/Articles/See%20what%20queries%20are%20currently%20running.aspx
+-- https://www.mssqltips.com/sqlservertip/1811/how-to-isolate-the-current-running-commands-in-sql-server/
 -------------------------------------------------------
 SELECT [dm_exec_requests].[start_time]             AS [start_time]
        , [dm_exec_requests].[session_id]           AS [spid]
@@ -19,10 +20,13 @@ SELECT [dm_exec_requests].[start_time]             AS [start_time]
        , [dm_exec_requests].[wait_time]            AS [wait_time]
        , [dm_exec_requests].[wait_resource]        AS [wait_resource]
        , [dm_exec_requests].[last_wait_type]       AS [last_wait_type]
+	   , [dm_exec_sessions].*
 FROM   [sys].[dm_exec_requests] AS [dm_exec_requests]
        OUTER APPLY [sys].[dm_exec_sql_text]([sql_handle]) AS [dm_exec_sql_text]
+	   join [sys].[dm_exec_sessions] as [dm_exec_sessions] on [dm_exec_sessions].[session_id] = [dm_exec_requests].[session_id]
 WHERE  [dm_exec_requests].[session_id] != @@SPID -- don't show this query
-       AND [dm_exec_requests].[session_id] > 50 -- don't show system queries
+       --AND [dm_exec_requests].[session_id] > 50 -- don't show system queries
+	   AND [dm_exec_sessions].[is_user_process] = 1
 ORDER  BY [dm_exec_requests].[start_time]; 
 
 
