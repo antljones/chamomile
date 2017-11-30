@@ -25,8 +25,8 @@ FROM   [sys].[dm_exec_requests] AS [dm_exec_requests]
        OUTER APPLY [sys].[dm_exec_sql_text]([sql_handle]) AS [dm_exec_sql_text]
 	   join [sys].[dm_exec_sessions] as [dm_exec_sessions] on [dm_exec_sessions].[session_id] = [dm_exec_requests].[session_id]
 WHERE  [dm_exec_requests].[session_id] != @@SPID -- don't show this query
-       --AND [dm_exec_requests].[session_id] > 50 -- don't show system queries
-	   AND [dm_exec_sessions].[is_user_process] = 1
+	--AND [dm_exec_requests].[session_id] > 50 -- don't show system queries
+	AND [dm_exec_sessions].[is_user_process] = 1 -- show only user processes
 ORDER  BY [dm_exec_requests].[start_time]; 
 
 
