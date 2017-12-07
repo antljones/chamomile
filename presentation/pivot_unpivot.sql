@@ -37,6 +37,7 @@
 	-- references
 	----------------------------------------------------------------------
 		Using PIVOT and UNPIVOT - http://msdn.microsoft.com/en-us/library/ms177410(v=sql.105).aspx
+		dynamic sql for non-fixed fields - https://stackoverflow.com/questions/47698749/tsql-transpose-rows-to-columns-grouping-by-a-column
 */
 --
 -- code block begin
