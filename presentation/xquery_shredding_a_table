@@ -1,3 +1,58 @@
+DECLARE @x2 XML = N'<A><B><int>3</int><int>4</int><int>2</int><int>29</int><int>31</int><int>32</int><int>39</int>
+	</B></A>';
+
+SELECT t.c.query(N'.').value(N'(/*)[1]', N'int') AS [int_value]
+FROM   @X2.nodes(N'/A/B/*') AS [t]([c]);
+
+
+--
+-------------------------------------------------
+DECLARE @builder AS TABLE
+  (
+       [C]   [INT]
+       , [D] [INT]
+       , [E] [XML]
+  );
+DECLARE @X XML ='<A> 
+    <B> 
+        <C>161</C> 
+        <D>191</D> 
+        <E>41 ,51 ,61 ,71</E> 
+    </B>
+    <B> 
+        <C>162</C> 
+        <D>192</D> 
+        <E>102</E> 
+    </B>
+    <B> 
+        <C>163</C> 
+        <D>193</D> 
+        <E>43, 53, 63</E> 
+    </B>
+</A>';
+
+WITH [row_builder]
+     AS (SELECT t.c.query(N'.') AS [b_row]
+         FROM   @X.nodes(N'/A/B') AS [t]([c]))
+   , [shredder]
+     AS (SELECT [b_row].value(N'(./B/C/text())[1]', N'[INT]')             AS [C]
+                , [b_row].value(N'(./B/D/text())[1]', N'[INT]')           AS [D]
+                , [b_row].value(N'(./B/E/text())[1]', N'[NVARCHAR](MAX)') AS [E]
+         FROM   [row_builder])
+   , [splitter]
+     AS (SELECT [C]
+                , [D]
+                , cast(( '<E>' + replace([E], N',', '</E><E>') + '</E>' ) AS XML) AS [E]
+         FROM   [shredder])
+SELECT [C]
+       , [D]
+       , [column].query(N'.').value(N'(/E/text())[1]', N'[INT]') AS [E]
+FROM   [splitter] AS [entry]
+       CROSS APPLY [E].[nodes]('/*') AS [table] ( [column] )
+ORDER  BY [C]
+          , [D]
+          , [E]; 
+
 --
 -- shredding specific values out of a table
 -------------------------------------------------
