@@ -33,3 +33,21 @@ GROUP  BY [schemas].[name]
 ORDER  BY [schemas].[name]
           , [tables].[name];
 --ORDER  BY [row_count] DESC; 
+
+
+--
+-- temp tables
+-------------------------------------------------
+SELECT [tables].[name]                                               AS [table]
+       , [dm_db_partition_stats].[row_count]                         AS [row_count]
+       , [dm_db_partition_stats].[used_page_count] * 8               AS [used_size_kb]
+       , [dm_db_partition_stats].[used_page_count] * 8 / 1024.00     AS [used_size_mb]
+       , [dm_db_partition_stats].[reserved_page_count] * 8           AS [reverved_size_kb]
+       , [dm_db_partition_stats].[reserved_page_count] * 8 / 1024.00 AS [reverved_size_mb]
+FROM   [tempdb].[sys].[partitions] AS [partitions]
+       INNER JOIN tempdb.[sys].[dm_db_partition_stats] AS [dm_db_partition_stats]
+               ON [partitions].[partition_id] = [dm_db_partition_stats].[partition_id]
+                  AND [partitions].[partition_number] = [dm_db_partition_stats].[partition_number]
+       INNER JOIN tempdb.[sys].[tables] AS [tables]
+               ON [dm_db_partition_stats].[object_id] = [tables].[object_id]
+ORDER  BY [tables].[name]; 
