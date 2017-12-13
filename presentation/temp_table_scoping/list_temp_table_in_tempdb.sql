@@ -9,7 +9,7 @@ FROM   [tempdb].[sys].[objects] AS [objects]
          ON [columns].[object_id] = [objects].[object_id]
        JOIN [sys].[types] AS [types]
          ON [types].[user_type_id] = [columns].[user_type_id]
-WHERE  [objects].[name] LIKE '#get_cclf_data_prev_13_answer_builder____%'
+WHERE  [objects].[name] LIKE '#my_temp_table____%'
 ORDER  BY [columns].[name] ASC;
 
 --
@@ -21,4 +21,4 @@ SELECT [objects].[name]                      AS [table]
 FROM   [tempdb].[sys].[dm_db_partition_stats] AS [dm_db_partition_stats]
        INNER JOIN [tempdb].[sys].[objects] AS [objects]
                ON [dm_db_partition_stats].[object_id] = [objects].[object_id]
-WHERE  [objects].[name] LIKE '#get_cclf_data_prev_13_answer_builder%'; 
+WHERE  [objects].[name] LIKE '#my_temp_table%'; 
