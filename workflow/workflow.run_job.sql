@@ -141,23 +141,6 @@ go
 
 --
 ------------------------------------------------- 
-if exists (select *
-           from   fn_listextendedproperty(N'description'
-                                          , N'schema'
-                                          , N'workflow'
-                                          , N'procedure'
-                                          , N'run_job'
-                                          , default
-                                          , default))
-  exec sys.sp_dropextendedproperty
-    @name = N'description',
-    @level0type = N'schema',
-    @level0name = N'workflow',
-    @level1type = N'procedure',
-    @level1name = N'run_job';
-
-go
-
 exec sys.sp_addextendedproperty
   @name = N'description',
   @value = N'[workflow].[run_job] is a job scheduling utility. It looks for jobs named 
@@ -175,23 +158,6 @@ go
 
 --
 ------------------------------------------------- 
-if exists (select *
-           from   fn_listextendedproperty(N'revision_20150810'
-                                          , N'schema'
-                                          , N'workflow'
-                                          , N'procedure'
-                                          , N'run_job'
-                                          , default
-                                          , default))
-  exec sys.sp_dropextendedproperty
-    @name = N'revision_20150810',
-    @level0type = N'schema',
-    @level0name = N'workflow',
-    @level1type = N'procedure',
-    @level1name = N'run_job';
-
-go
-
 exec sys.sp_addextendedproperty
   @name = N'revision_20150810',
   @value = N'KLightsey@gmail.com – created.',
@@ -204,23 +170,6 @@ go
 
 --
 ------------------------------------------------- 
-if exists (select *
-           from   fn_listextendedproperty(N'package_refresh'
-                                          , N'schema'
-                                          , N'workflow'
-                                          , N'procedure'
-                                          , N'run_job'
-                                          , default
-                                          , default))
-  exec sys.sp_dropextendedproperty
-    @name = N'package_refresh',
-    @level0type = N'schema',
-    @level0name = N'workflow',
-    @level1type = N'procedure',
-    @level1name = N'run_job';
-
-go
-
 exec sys.sp_addextendedproperty
   @name = N'package_refresh',
   @value = N'label_only',
@@ -233,27 +182,10 @@ go
 
 --
 ------------------------------------------------- 
-if exists (select *
-           from   fn_listextendedproperty(N'execute_as'
-                                          , N'schema'
-                                          , N'workflow'
-                                          , N'procedure'
-                                          , N'run_job'
-                                          , default
-                                          , default))
-  exec sys.sp_dropextendedproperty
-    @name = N'execute_as',
-    @level0type = N'schema',
-    @level0name = N'workflow',
-    @level1type = N'procedure',
-    @level1name = N'run_job';
-
-go
-
 exec sys.sp_addextendedproperty
   @name = N'execute_as',
   @value = N'
-  declare @header [sysname]=N''refresh.DWReporting.daily'';
+  declare @header [sysname]=N''refresh.<label>.daily'';
   execute [workflow].[run_job] @header=@header;',
   @level0type = N'schema',
   @level0name = N'workflow',
@@ -264,25 +196,6 @@ go
 
 --
 ------------------------------------------------- 
-if exists (select *
-           from   fn_listextendedproperty(N'execute_as'
-                                          , N'schema'
-                                          , N'workflow'
-                                          , N'procedure'
-                                          , N'run_job'
-                                          , N'parameter'
-                                          , N'@header'))
-  exec sys.sp_dropextendedproperty
-    @name = N'execute_as',
-    @level0type = N'schema',
-    @level0name = N'workflow',
-    @level1type = N'procedure',
-    @level1name = N'run_job',
-    @level2type = N'parameter',
-    @level2name = N'@header';
-
-go
-
 exec sys.sp_addextendedproperty
   @name = N'execute_as',
   @value = N'@header [sysname]',
@@ -297,25 +210,6 @@ go
 
 --
 ------------------------------------------------- 
-if exists (select *
-           from   fn_listextendedproperty(N'execute_as'
-                                          , N'schema'
-                                          , N'workflow'
-                                          , N'procedure'
-                                          , N'run_job'
-                                          , N'parameter'
-                                          , N'@last_step'))
-  exec sys.sp_dropextendedproperty
-    @name = N'execute_as',
-    @level0type = N'schema',
-    @level0name = N'workflow',
-    @level1type = N'procedure',
-    @level1name = N'run_job',
-    @level2type = N'parameter',
-    @level2name = N'@last_step';
-
-go
-
 exec sys.sp_addextendedproperty
   @name = N'execute_as',
   @value = N'@last_step [int]=1000 - defaults to 999 maximum steps (<@last_step). Increase to add additional jobs or decrease
@@ -332,25 +226,6 @@ go
 
 --
 ------------------------------------------------- 
-if exists (select *
-           from   fn_listextendedproperty(N'execute_as'
-                                          , N'schema'
-                                          , N'workflow'
-                                          , N'procedure'
-                                          , N'run_job'
-                                          , N'parameter'
-                                          , N'@step_delay'))
-  exec sys.sp_dropextendedproperty
-    @name = N'execute_as',
-    @level0type = N'schema',
-    @level0name = N'workflow',
-    @level1type = N'procedure',
-    @level1name = N'run_job',
-    @level2type = N'parameter',
-    @level2name = N'@step_delay';
-
-go
-
 exec sys.sp_addextendedproperty
   @name = N'execute_as',
   @value = N'@step_delay [sysname]=N''00:00:15'' -  the delay between steps, used to give the
@@ -366,25 +241,6 @@ go
 
 --
 ------------------------------------------------- 
-if exists (select *
-           from   fn_listextendedproperty(N'execute_as'
-                                          , N'schema'
-                                          , N'workflow'
-                                          , N'procedure'
-                                          , N'run_job'
-                                          , N'parameter'
-                                          , N'@process_delay'))
-  exec sys.sp_dropextendedproperty
-    @name = N'execute_as',
-    @level0type = N'schema',
-    @level0name = N'workflow',
-    @level1type = N'procedure',
-    @level1name = N'run_job',
-    @level2type = N'parameter',
-    @level2name = N'@process_delay';
-
-go
-
 exec sys.sp_addextendedproperty
   @name = N'execute_as',
   @value = N'@process_delay [sysname]=N''00:00:15'' - the delay after each job is started, used to give the
