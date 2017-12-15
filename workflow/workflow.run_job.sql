@@ -2,14 +2,10 @@ use [chamomile];
 
 go
 
-set ansi_nulls on;
-
+if schema_id(N'workflow') is null
+ execute(N'create schema workflow');
 go
-
-set quoted_identifier on;
-
-go
-
+ 
 if object_id(N'[workflow].[run_job]'
              , N'P') is not null
   drop procedure [workflow].[run_job];
