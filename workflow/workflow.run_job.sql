@@ -119,7 +119,7 @@ as
                         + cast(@step as [sysname]);
 
                   --
-                  execute [msdb].[workflow].[sp_start_job]
+                  execute [msdb].[dbo].[sp_start_job]
                     @job;
 
                   --
@@ -194,7 +194,7 @@ go
 
 exec sys.sp_addextendedproperty
   @name = N'revision_20150810',
-  @value = N'KLightsey@hcpnv.com – created.',
+  @value = N'KLightsey@hcpnv.com â€“ created.',
   @level0type = N'schema',
   @level0name = N'workflow',
   @level1type = N'procedure',
