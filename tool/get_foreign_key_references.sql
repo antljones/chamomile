@@ -30,3 +30,10 @@ order  by [referenced_object]
 
 select *
 from   information_schema.referential_constraints; 
+
+-- https://blog.sqlauthority.com/2013/04/29/sql-server-disable-all-the-foreign-key-constraint-in-database-enable-all-the-foreign-key-constraint-in-database/
+-- Disable all the constraint in database
+EXEC sp_msforeachtable "ALTER TABLE ? NOCHECK CONSTRAINT all"
+
+-- Enable all the constraint in database
+EXEC sp_msforeachtable "ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all"
