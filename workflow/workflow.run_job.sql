@@ -11,41 +11,29 @@ if object_id(N'[workflow].[run_job]'
   drop procedure [workflow].[run_job];
 
 go
-
 /*
-	--
-	-- RUN SCRIPT FOR DOCUMENTATION
-	------------------------------------------------
-	declare @schema [sysname] = N'workflow', @object [sysname] = N'run_job';
-	--
-	-------------------------------------------------
-	select N'[' + object_schema_name([extended_properties].[major_id]) +N'].['+
-       case when Object_name([objects].[parent_object_id]) is not null 
-			then Object_name([objects].[parent_object_id]) +N'].['+Object_name([objects].[object_id]) +N']' 
-			else Object_name([objects].[object_id]) +N']' + 
-				case when [parameters].[parameter_id] > 0
-					then coalesce(N'.['+[parameters].[name] + N']', N'') 
-					else N'' 
-				end +
-				case when columnproperty ([objects].[object_id], [parameters].[name], N'IsOutParam') = 1  then N' output'
-					else N''
-				end
-		end                                                                     as [object]
-       ,case when [extended_properties].[minor_id]=0 then [objects].[type_desc]
-			else N'PARAMETER'
-        end                                                                     as [type]
-		   ,[extended_properties].[name]                                        as [property]
-		   ,[extended_properties].[value]                                       as [value]
-	from   [sys].[extended_properties] as [extended_properties]
-		   join [sys].[objects] as [objects]
-			 on [objects].[object_id]=[extended_properties].[major_id]
-		   join [sys].[schemas] as [schemas]
-			 on [schemas].[schema_id]=[objects].[schema_id]
-		   left join [sys].[parameters] as [parameters]
-				  on [extended_properties].[major_id]=[parameters].[object_id] and
-					 [parameters].[parameter_id]=[extended_properties].[minor_id]
-	where  [schemas].[name]=@schema and [objects].[name]=@object
-	order  by [parameters].[parameter_id],[object],[type],[property]; 
+    -- 
+    -- EXTRACT DOCUMENTATION
+    ---------------------------------------------
+    DECLARE @schema   [SYSNAME] = N'workflow'
+            , @object [SYSNAME] = N'run_job';
+    
+    SELECT [extended_properties].[name]
+           , [extended_properties].[class_desc]
+           , [extended_properties].[value]
+    FROM   [sys].[extended_properties] AS [extended_properties]
+           JOIN [sys].[objects] AS [objects]
+             ON [objects].[object_id] = [extended_properties].[major_id]
+           JOIN [sys].[schemas] AS [schemas]
+             ON [schemas].[schema_id] = [objects].[schema_id]
+           LEFT JOIN [sys].[parameters] AS [parameters]
+                  ON [extended_properties].[major_id] = [parameters].[object_id]
+                     AND [parameters].[parameter_id] = [extended_properties].[minor_id]
+    WHERE  [schemas].[name] = @schema
+           AND [objects].[name] = @object
+    ORDER  BY [extended_properties].[class_desc]
+              , [extended_properties].[name]
+              , [extended_properties].[value]; 
 */
 create procedure [workflow].[run_job] @header          [sysname]
                                        , @last_step     [int]=1000
