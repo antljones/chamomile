@@ -6,11 +6,15 @@
 		If you want to separate table space from index space, you need to use AND i.index_id IN (0,1) 
 			for the table space (index_id = 0 is the heap space, index_id = 1 is the size of the 
 			clustered index = data pages) and AND i.index_id > 1 for the index-only space
+-- sys.allocation_units (Transact-SQL) https://docs.microsoft.com/en-us/sql/relational-databases/system-catalog-views/sys-allocation-units-transact-sql
+-- Understanding Pages and Extents https://technet.microsoft.com/en-us/library/ms190969(v=sql.105).aspx
 */
 SELECT [schemas].[name]                                                                       AS [schema]
        , [tables].[name]                                                                      AS [table]
        , [partitions].[rows]                                                                  AS [row_count]
        , SUM([allocation_units].[total_pages]) * 8                                            AS [total_space_kb]
+                , SUM([allocation_units].[total_pages]) / 128                                          AS [total_space_mb]
+                , SUM([allocation_units].[total_pages]) / 128 / 1024                                   AS [total_space_gb]
        , SUM([allocation_units].[used_pages]) * 8                                             AS [used_space_kb]
        , ( SUM([allocation_units].[total_pages]) - SUM([allocation_units].[used_pages]) ) * 8 AS [unused_space_kb]
 FROM   [sys].[tables] AS [tables]
