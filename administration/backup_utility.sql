@@ -1,3 +1,10 @@
+
+--
+-- https://docs.microsoft.com/en-us/sql/relational-databases/system-stored-procedures/sp-spaceused-transact-sql?view=sql-server-2017
+-------------------------------------------------
+EXEC sp_spaceused
+  @updateusage = N'TRUE'; 
+
 --
 EXEC sp_addumpdevice
   @devtype = N'disk'
