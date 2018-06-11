@@ -12,6 +12,9 @@ if exists (select *
 GO
 
 -- select [conversion].[binary_to_decimal] (N'101');
+-- Converting Between Base 2, 10 and 16 in T-SQL, Mark S. Rasmussen 
+-- https://improve.dk/converting-between-base-2-10-and-16-in-t-sql/
+-------------------------------------------------
 create function [conversion].[binary_to_decimal] (@input varchar(255))
 RETURNS bigint
 as
