@@ -1,32 +1,33 @@
-IF EXISTS (SELECT *
-           FROM   [sys].[objects]
-           WHERE  [object_id] = OBJECT_ID(N'[conversion].[binary_to_decimal]')
-                  AND [type] IN ( N'FN', N'IF', N'TF', N'FS', N'FT' ))
-  DROP FUNCTION [conversion].[binary_to_decimal];
+if schema_id(N'conversion') is null
+  execute (N'create schema conversion');
+
+go
+
+if exists (select *
+           from   [sys].[objects]
+           where  [object_id] = OBJECT_ID(N'[conversion].[binary_to_decimal]')
+                  and [type] in ( N'FN', N'IF', N'TF', N'FS', N'FT' ))
+  drop function [conversion].[binary_to_decimal];
 
 GO
 
-CREATE FUNCTION [conversion].[binary_to_decimal] (
-  @input VARCHAR(255))
-RETURNS BIGINT
-AS
-  BEGIN
-      DECLARE @count    TINYINT = 1
-              , @length TINYINT = LEN(@input);
+-- select [conversion].[binary_to_decimal] (N'101');
+create function [conversion].[binary_to_decimal] (@input varchar(255))
+RETURNS bigint
+as
+  begin
+      declare @count    tinyint = 1
+              , @length tinyint = LEN(@input);
+      declare @output bigint = CAST(SUBSTRING(@input, @length, 1) as bigint);
 
-      DECLARE @output BIGINT = CAST(SUBSTRING(@input
-                       , @length
-                       , 1) AS BIGINT);
+      while ( @count < @length )
+        begin
+            set @output = @output
+                          + POWER(CAST(SUBSTRING(@input, @length - @count, 1) * 2 as bigint), @count);
+            set @count = @count + 1;
+        end;
 
-      WHILE ( @count < @length )
-        BEGIN
-            SET @output = @output
-                          + POWER(CAST(SUBSTRING(@input, @length - @count, 1) * 2 AS BIGINT), @count);
-
-            SET @count = @count + 1;
-        END;
-
-      RETURN @output;
-  END;
+      return @output;
+  end;
 
 GO 
