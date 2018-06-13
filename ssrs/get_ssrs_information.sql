@@ -1,5 +1,6 @@
 --
--- Retrieve SSRS report server database information https://blogs.technet.microsoft.com/dbtechresource/2015/04/04/retrieve-ssrs-report-server-database-information/
+-- Retrieve SSRS report server database information:
+--   https://blogs.technet.microsoft.com/dbtechresource/2015/04/04/retrieve-ssrs-report-server-database-information/
 -------------------------------------------------
 select schema_name([tables].[schema_id])
        , [tables].[name]
