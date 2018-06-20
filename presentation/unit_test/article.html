@@ -1,5 +1,5 @@
 <p>
-  While Unit Testing is a common practice in most modern programming languages, SQL practitioners do not commonly create or use Unit Tests, and there does not seem to be an accepted standard practice for creating and using Unit Tests. A great part of the reason for this is the difficulty involved in creating and maintaining Mock Data.
+  While Unit Testing is a common practice in most modern programming languages, SQL practitioners do not commonly create or use Unit Tests, and there does not seem to be an accepted standard practice for creating and using Unit Tests. A great part of the reason for this is the difficulty involved in creating and maintaining <a href="https://blog.scottlogic.com/2016/02/08/data-mocking.html" target="blank">Mock Data</a>.
 </p>
 <h2>This article introduces:</h2>
   <ol>
@@ -17,9 +17,7 @@
 	<li>
 		<u>A well written Unit Test serves as an acceptance test for an object</u>. If the Unit Test adequately describes the required functionality, and it passes, the object under test is acceptable. This does NOT remove the requirement for general best practices such as clarity in code and documentation from the programmer, but it does make the job of functional testing much more straight forward.
 	</li>
-	<li>
-		<u style="font-size: 12.8px;">A well written Unit Test allows the object under test to be readily refactored</u>
-		<span style="font-size: 12.8px;">. The ability to refactor objects almost at will is a core tenet of modern programming. However, without a Unit Test to validate existing functionality, and that the existing functionality is not compromised by the refactoring, refactoring is rarely performed. Unit tests allow an object to be written as simply as possible to meet the current requirements, with the knowledge that it can easily be refactored in the future to meet additional requirements as long as the existing Unit Tests continue to pass.</span>
+	<li><u>A well written Unit Test allows the object under test to be readily refactored</u>. The ability to refactor objects almost at will is a core tenet of modern programming. However, without a Unit Test to validate existing functionality, and that the existing functionality is not compromised by the refactoring, refactoring is rarely performed. Unit tests allow an object to be written as simply as possible to meet the current requirements, with the knowledge that it can easily be refactored in the future to meet additional requirements as long as the existing Unit Tests continue to pass.
 	</li>
 </ol>
 <h2>Note:</h2>
@@ -67,17 +65,12 @@
 		<em style="font-size: 12.8px;">[&lt;schema&gt;].[&lt;object&gt;]</em>
 		<span style="font-size: 12.8px;">&nbsp;is the object to be tested allows security constraints as well as ready identification of tests for specific objects.</span>
 	</li>
-	<li>
-		<span style="font-size: 12.8px;">Defined 
-			<em>@output [xml]</em> parameter. Implementation of a defined&nbsp;
-		</span>
-		<em style="font-size: 12.8px;">@output [xml]</em>
-		<span style="font-size: 12.8px;">&nbsp;parameter both allows automated testing&nbsp;</span>
+	<li><u>Defined <i>@output [xml]</i> parameter</u>. Implementation of a <i>@output [xml]</i> parameter both allows automated testing.
 	</li>
 </ol>
 <p>
   Implementing a test runner such as 
-	<em>[master].[dbo].[sp_run_test]</em> allows tests to be run programmatically in any database when the conventions above are followed.
+	<i>[master].[dbo].[sp_run_test]</i> allows tests to be run programmatically in any database when the conventions above are followed.
 
 </p>
 <p></p>
