@@ -4,25 +4,26 @@ exec dbo.sp_help_jobsteplog
 
 go
 
-select j.name                                        as 'JobName'
-       , run_date
-       , run_time
-       , run_duration
-       , run_duration / 10000                        Hours
-       , --hours
-       run_duration / 100%100                        Minutes
-       , --minutes
-       run_duration%100                              Seconds --seconds
-       , msdb.dbo.agent_datetime(run_date, run_time) as 'RunDateTime'
-From   msdb.dbo.sysjobhistory h
-       join msdb.dbo.sysjobs j
-         ON j.job_id = h.job_id
---where  j.enabled = 1 --Only Enabled Jobs
-where  j.name = N'expire.session'
-order  by JobName
-          , RunDateTime asc; 
+--
+----------------------------------------------
+select [sysjobs].[name]                                        as [job_name]
+       , [sysjobhistory].[run_duration] / 10000                as [hours]
+       , [sysjobhistory].[run_duration] / 100%100              as [minutes]
+       , [sysjobhistory].[run_duration]%100                    as [seconds]
+       , [msdb].[dbo].[agent_datetime]([run_date], [run_time]) as [run_date_time]
+       , [sysjobhistory].[message]                             as [message]
+       , [sysjobhistory].[retries_attempted]                   as [retries_attempted]
+from   [msdb].[dbo].[sysjobhistory] as [sysjobhistory]
+       join [msdb].[dbo].[sysjobs] as [sysjobs]
+         on [sysjobs].[job_id] = [sysjobhistory].[job_id]
+where  1 = 1
+       -- and [sysjobs].[enabled] = 1 -- only enabled jobs
+       and [sysjobs].[name] = N'<job_name>'
+order  by [job_name]
+          , [run_date_time] desc; 
 
-declare @job   [sysname] = N'refresh.DWReporting.daily',
+
+declare @job   [sysname] = N'<job_name>',
         @begin [datetime] = N'20150901',
         @end   [datetime] = null;
 
