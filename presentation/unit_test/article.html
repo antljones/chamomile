@@ -11,30 +11,41 @@
   Unit Testing objects accomplishes several important tasks:
 </p>
 <ol>
-  <li>
-    <u>A well written Unit Test serves as an acceptance test for an object</u>. If the Unit Test adequately describes the required functionality, and it passes, the object under test is acceptable. This does NOT remove the requirement for general best practices such as clarity in code and documentation from the programmer, but it does make the job of functional testing much more straight forward.</li>
-  <li>
-    <u style="font-size: 12.8px;">A well written Unit Test allows the object under test to be readily refactored</u><span style="font-size: 12.8px;">. The ability to refactor objects almost at will is a core tenet of modern programming. However, without a Unit Test to validate existing functionality, and that the existing functionality is not compromised by the refactoring, refactoring is rarely performed. Unit tests allow an object to be written as simply as possible to meet the current requirements, with the knowledge that it can easily be refactored in the future to meet additional requirements as long as the existing Unit Tests continue to pass.</span></li>
+	<li>
+		<u>A well written Unit Test serves as an acceptance test for an object</u>. If the Unit Test adequately describes the required functionality, and it passes, the object under test is acceptable. This does NOT remove the requirement for general best practices such as clarity in code and documentation from the programmer, but it does make the job of functional testing much more straight forward.
+	</li>
+	<li>
+		<u style="font-size: 12.8px;">A well written Unit Test allows the object under test to be readily refactored</u>
+		<span style="font-size: 12.8px;">. The ability to refactor objects almost at will is a core tenet of modern programming. However, without a Unit Test to validate existing functionality, and that the existing functionality is not compromised by the refactoring, refactoring is rarely performed. Unit tests allow an object to be written as simply as possible to meet the current requirements, with the knowledge that it can easily be refactored in the future to meet additional requirements as long as the existing Unit Tests continue to pass.</span>
+	</li>
 </ol>
 <h2>
   Process:
 </h2>
 <ol>
-  <li>
-    <u>Create a procedure to test the target object</u>. By convention, I prefer to name the test procedure as <em>[&lt;schema&gt;_test].[&lt;object&gt;]</em> where <em>[&lt;schema&gt;].[&lt;object&gt;]</em> is the object to be tested. For example, to test a procedure <em>[account].[get_primary]</em> I will create a test procedure named <em>[account_test].[get_primary]</em>. This technique of grouping the tests by convention in schemas named with the &quot;<em>_test</em>&quot; extension facilitates automated testing (see Automated Testing header below).</li>
-  <li>
-  </li>
+	<li>
+		<u>Create a procedure to test the target object</u>. By convention, I prefer to name the test procedure as 
+		<em>[&lt;schema&gt;_test].[&lt;object&gt;]</em> where 
+		<em>[&lt;schema&gt;].[&lt;object&gt;]</em> is the object to be tested. For example, to test a procedure 
+		<em>[account].[get_primary]</em> I will create a test procedure named 
+		<em>[account_test].[get_primary]</em>. This technique of grouping the tests by convention in schemas named with the &quot;
+		<em>_test</em>&quot; extension facilitates automated testing (see Automated Testing header below).
+	</li>
+	<li></li>
 </ol>
+<p></p>
 <p>
+	<span style="color: rgb(0, 51, 102); font-size: 19.2px; font-weight: bold;">Create Test Objects and Data:</span>
 </p>
 <p>
-  <span style="color: rgb(0, 51, 102); font-size: 19.2px; font-weight: bold;">Create Test Objects and Data:</span>
+	<em>
+		<span style="font-size: 12.8px;">
+			<strong>Note</strong>: Normal error handling techniques are not included in the test objects for clarity.
+		</span>
+	</em>
 </p>
 <p>
-  <em><span style="font-size: 12.8px;"><strong>Note</strong>: Normal error handling techniques are not included in the test objects for clarity.</span></em>
-</p>
-<p>
-  <span style="font-size: 12.8px;">To demonstrate, we will need some data for testing. The script below will create and populate a working table with some sample data. We are going to use a calculated column to get the age from a date of birth. We will write Unit Tests both for mutator and accessor methods as well as to validate the calculated column.</span>
+	<span style="font-size: 12.8px;">To demonstrate, we will need some data for testing. The script below will create and populate a working table with some sample data. We are going to use a calculated column to get the age from a date of birth. We will write Unit Tests both for mutator and accessor methods as well as to validate the calculated column.</span>
 </p>
 <h2>
   Create Procedures To Be Tested:
@@ -46,18 +57,31 @@
   Automated Testing:
 </h2>
 <p>
-  Automated testing can be implemented if the conventions defined here are followed. The most important two are naming, grouping tests in schemas named with the &quot;<em>_test</em>&quot; extension, and the use of the <em>@output [xml]</em> parameter with defined nodes.
+  Automated testing can be implemented if the conventions defined here are followed. The most important two are naming, grouping tests in schemas named with the &quot;
+	<em>_test</em>&quot; extension, and the use of the 
+	<em>@output [xml]</em> parameter with defined nodes.
+
 </p>
 <ol>
-  <li>
-    <u>Naming convention</u>. Using a naming convention for tests as&nbsp;<em style="font-size: 12.8px;">[&lt;schema&gt;_test].[&lt;object&gt;]</em><span style="font-size: 12.8px;">&nbsp;where&nbsp;</span><em style="font-size: 12.8px;">[&lt;schema&gt;].[&lt;object&gt;]</em><span style="font-size: 12.8px;">&nbsp;is the object to be tested allows security constraints as well as ready identification of tests for specific objects.</span></li>
-  <li>
-    <span style="font-size: 12.8px;">Defined <em>@output [xml]</em> parameter. Implementation of a defined&nbsp;</span><em style="font-size: 12.8px;">@output [xml]</em><span style="font-size: 12.8px;">&nbsp;parameter both allows automated testing&nbsp;</span></li>
+	<li>
+		<u>Naming convention</u>. Using a naming convention for tests as&nbsp;
+		<em style="font-size: 12.8px;">[&lt;schema&gt;_test].[&lt;object&gt;]</em>
+		<span style="font-size: 12.8px;">&nbsp;where&nbsp;</span>
+		<em style="font-size: 12.8px;">[&lt;schema&gt;].[&lt;object&gt;]</em>
+		<span style="font-size: 12.8px;">&nbsp;is the object to be tested allows security constraints as well as ready identification of tests for specific objects.</span>
+	</li>
+	<li>
+		<span style="font-size: 12.8px;">Defined 
+			<em>@output [xml]</em> parameter. Implementation of a defined&nbsp;
+		</span>
+		<em style="font-size: 12.8px;">@output [xml]</em>
+		<span style="font-size: 12.8px;">&nbsp;parameter both allows automated testing&nbsp;</span>
+	</li>
 </ol>
 <p>
-  Implementing a test runner such as <em>[master].[dbo].[sp_run_test]</em> allows tests to be run programmatically in any database when the conventions above are followed.
+  Implementing a test runner such as 
+	<em>[master].[dbo].[sp_run_test]</em> allows tests to be run programmatically in any database when the conventions above are followed.
+
 </p>
-<p>
-</p>
-<p>
-</p>
+<p></p>
+<p></p>
