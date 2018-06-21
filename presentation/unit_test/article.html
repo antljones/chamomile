@@ -25,15 +25,21 @@
 		<li>Normal error handling techniques are not included in the test objects for clarity.</li>
 		<li>The process demonstrated here assumes implementation by an experienced professional aware of the application on which it is implemented. Examples include, but are not limited to, avoiding external access such as sending objects to a queue or via smtp. In other words; common sense is assumed to prevail.</li>
 	</ol>
+<h2>Unit Test Best Practices:</h2>
+<p>There are some generally accepted best practices for unit tests. Some of these make sense for use with SQL, some we might take some liberty with. I generally try to follow best practices unless I have a clear argument for doing something different. "We've always done it that way," is not a clear argument.</p>
+	<ol>
+		<li><u>Each test object should only contain one test</u>. I've found this to be a burdensome requirement when you have a lot of little things you want to test for. As long as the test object itself is clear I don't mind grouping a few things in a single test. I'll cover reporting with the <i>@output</i> parameter.</li>
+		<li><u>Tests should not include parameters</u>. Tests should not depend on data passed in. They should be consistent, declarative. I do parameterized my tests, but with an <i>@output</i> object for reporting.</li>
+	</ol>
 <h2>Process:</h2>
 <ol>
 	<li>
 		<u>Create a procedure to test the target object</u>. By convention, I prefer to name the test procedure as 
-		<em>[&lt;schema&gt;_test].[&lt;object&gt;]</em> where 
-		<em>[&lt;schema&gt;].[&lt;object&gt;]</em> is the object to be tested. For example, to test a procedure 
-		<em>[account].[get_primary]</em> I will create a test procedure named 
-		<em>[account_test].[get_primary]</em>. This technique of grouping the tests by convention in schemas named with the &quot;
-		<em>_test</em>&quot; extension facilitates automated testing (see Automated Testing header below).
+		<i>[&lt;schema&gt;_test].[&lt;object&gt;_test_nn]</i> where 
+		<i>[&lt;schema&gt;].[&lt;object&gt;]</i> is the object to be tested. For example, to test a procedure 
+		<i>[account].[get_primary]</i> I will create a test procedure named 
+		<i>[account_test].[get_primary_test_01]</i>. This technique of grouping the tests by convention in schemas named with the &quot;
+		<i>_test</i>&quot; extension facilitates automated testing (see Automated Testing header below). The "_test_nn" in the object name allow multiple tests to be created for a single object but still grouped by the schema and object name.
 	</li>
 	<li></li>
 </ol>
@@ -53,16 +59,16 @@
 </h2>
 <p>
   Automated testing can be implemented if the conventions defined here are followed. The most important two are naming, grouping tests in schemas named with the &quot;
-	<em>_test</em>&quot; extension, and the use of the 
-	<em>@output [xml]</em> parameter with defined nodes.
+	<i>_test</i>&quot; extension, and the use of the 
+	<i>@output [xml]</i> parameter with defined nodes.
 
 </p>
 <ol>
 	<li>
 		<u>Naming convention</u>. Using a naming convention for tests as&nbsp;
-		<em style="font-size: 12.8px;">[&lt;schema&gt;_test].[&lt;object&gt;]</em>
+		<em style="font-size: 12.8px;">[&lt;schema&gt;_test].[&lt;object&gt;]</i>
 		<span style="font-size: 12.8px;">&nbsp;where&nbsp;</span>
-		<em style="font-size: 12.8px;">[&lt;schema&gt;].[&lt;object&gt;]</em>
+		<em style="font-size: 12.8px;">[&lt;schema&gt;].[&lt;object&gt;]</i>
 		<span style="font-size: 12.8px;">&nbsp;is the object to be tested allows security constraints as well as ready identification of tests for specific objects.</span>
 	</li>
 	<li><u>Defined <i>@output [xml]</i> parameter</u>. Implementation of a <i>@output [xml]</i> parameter both allows automated testing.
